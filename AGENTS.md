@@ -1,6 +1,7 @@
 # Diretrizes
 
 - Commits: sempre git add -A, commitar e dar push em todas as alterações ao final de cada tarefa.
+- **Versionamento obrigatório**: todo commit + push deve seguir as regras de versionamento via `php artisan version:bump [major|minor|patch|X.Y.Z]` (atualiza `VERSION`, `package.json`, badge do README, changelog, cria tag `vX.Y.Z`, push da tag e GitHub Release). O commit do `version:bump` inclui todas as alterações pendentes da tarefa. `--dry-run` mostra o plano antes de aplicar; usar `patch` para correções, `minor` para novas funcionalidades e `major` para quebras de compatibilidade.
 - O script install/install.sh pergunta email e senha para o primeiro usuário super-admin (padrão super@vet.com).
 
 ## Summary
