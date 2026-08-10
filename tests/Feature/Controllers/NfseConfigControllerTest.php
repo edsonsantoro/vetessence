@@ -60,6 +60,17 @@ class NfseConfigControllerTest extends ModuleTestCase
         ]);
     }
 
+    public function test_update_rejects_deactivated_providers()
+    {
+        foreach (['focusnfe', 'spedy'] as $provider) {
+            $response = $this->put(route('nfse.config.update'), [
+                'provider' => $provider,
+                'ambiente' => 'homologacao',
+            ]);
+            $response->assertSessionHasErrors('provider');
+        }
+    }
+
     public function test_update_nfeio_validates_company_id()
     {
         $response = $this->put(route('nfse.config.update'), [

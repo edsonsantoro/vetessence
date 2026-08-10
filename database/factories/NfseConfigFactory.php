@@ -14,6 +14,7 @@ class NfseConfigFactory extends Factory
         return [
             'provider' => 'webmania',
             'ambiente' => 'homologacao',
+            'emit_auto' => true,
             'webmania_access_token' => $this->faker->uuid(),
             'is_active' => true,
         ];

@@ -16,9 +16,12 @@ class NfeConfigControllerTest extends ModuleTestCase
     public function test_edit()
     {
         NfeConfig::create([
-            'provider' => 'focusnfe',
+            'provider' => 'webmania',
             'ambiente' => 'homologacao',
-            'focusnfe_token' => 'test-token',
+            'webmania_consumer_key' => 'consumer-key',
+            'webmania_consumer_secret' => 'consumer-secret',
+            'webmania_access_token' => 'access-token',
+            'webmania_access_token_secret' => 'access-token-secret',
             'is_active' => true,
         ]);
 
@@ -32,19 +35,16 @@ class NfeConfigControllerTest extends ModuleTestCase
         $response->assertOk();
     }
 
-    public function test_update_with_focusnfe()
+    public function test_update_rejects_deactivated_focusnfe()
     {
         $response = $this->put(route('nfe.config.update'), [
             'provider' => 'focusnfe',
             'ambiente' => 'homologacao',
             'focusnfe_token' => 'fn-token-123',
         ]);
-        $response->assertRedirect();
-        $response->assertSessionHas('success');
-        $this->assertDatabaseHas('nfe_configs', [
+        $response->assertSessionHasErrors('provider');
+        $this->assertDatabaseMissing('nfe_configs', [
             'provider' => 'focusnfe',
-            'ambiente' => 'homologacao',
-            'is_active' => true,
         ]);
     }
 

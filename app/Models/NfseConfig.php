@@ -12,6 +12,7 @@ class NfseConfig extends Model
     protected $fillable = [
         'provider',
         'ambiente',
+        'emit_auto',
         'webmania_consumer_key',
         'webmania_consumer_secret',
         'webmania_access_token',
@@ -24,5 +25,6 @@ class NfseConfig extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'emit_auto' => 'boolean',
     ];
 }

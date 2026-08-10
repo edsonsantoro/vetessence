@@ -20,17 +20,47 @@ class EmitirNfseOnPaidTest extends ModuleTestCase
             'branch_id' => $config->branch_id,
             'nfse_status' => 'none',
         ]);
+        $invoice->items()->create([
+            'description' => 'Serviço',
+            'quantity' => 1,
+            'unit_price' => 100,
+            'total' => 100,
+            'item_type' => 'service',
+            'branch_id' => $invoice->branch_id,
+        ]);
 
         $service = $this->createMock(NfseService::class);
         $service->method('getConfig')->willReturn($config);
-        $service->method('emitir')->willReturn(
+        $service->expects($this->once())->method('emitir')->willReturn(
             NfseResult::success('123456', 'COD', 'https://xml', 'https://pdf', 'RPS', 'CODE', [])
         );
 
         $listener = new EmitirNfseOnPaid($service);
         $listener->handle(new InvoicePaid($invoice));
+    }
 
-        $this->assertTrue(true);
+    public function test_skip_emit_when_emit_auto_disabled()
+    {
+        $config = NfseConfig::factory()->create(['is_active' => true, 'emit_auto' => false]);
+        $invoice = Invoice::factory()->create([
+            'branch_id' => $config->branch_id,
+            'nfse_status' => 'none',
+        ]);
+        $invoice->items()->create([
+            'description' => 'Serviço',
+            'quantity' => 1,
+            'unit_price' => 100,
+            'total' => 100,
+            'item_type' => 'service',
+            'branch_id' => $invoice->branch_id,
+        ]);
+
+        $service = $this->createMock(NfseService::class);
+        $service->method('getConfig')->willReturn($config);
+        $service->expects($this->never())->method('emitir');
+
+        $listener = new EmitirNfseOnPaid($service);
+        $listener->handle(new InvoicePaid($invoice));
     }
 
     public function test_skip_emit_without_active_config()

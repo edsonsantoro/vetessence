@@ -151,8 +151,6 @@ O sistema suporta provedores de NFSe, configuráveis na tela de Config. NF:
 |----------|-------------|
 | **Webmania®** | Consumer Key, Consumer Secret, Access Token, Access Token Secret |
 | **NFE.io** | API Key, Company ID |
-| **FocusNFe** | API Token (configurado via foco) |
-| **Spedy** | API Key (configurado via spedy) |
 
 ### Configuração do Provedor
 
@@ -175,6 +173,7 @@ O sistema suporta provedores de NFSe, configuráveis na tela de Config. NF:
 
 **Automático:**
 - Quando uma fatura é **marcada como paga**, a NFSe é emitida automaticamente
+- Isso pode ser **desativado** no checkbox **Emissão automática ao confirmar pagamento** da configuração NFS-e — a nota passa a ser emitida apenas manualmente pelo botão **Emitir Nota Fiscal** na fatura paga
 - Funciona apenas para filiais com dados fiscais configurados
 - Comando `nfse:emit-pending` emite notas pendentes a cada 10 min
 
@@ -226,7 +225,6 @@ O sistema suporta provedores de NF-e/NFC-e, configuráveis na tela de Config. NF
 |----------|-------------|
 | **Webmania®** | Consumer Key, Consumer Secret, Access Token, Access Token Secret |
 | **NFE.io** | API Key, Company ID |
-| **FocusNFe** | API Token (configurado via foco) |
 
 ### Configuração do Provedor
 
@@ -277,6 +275,7 @@ Cada filial precisa dos seguintes dados para emitir NF-e:
 
 **Automático:**
 - Quando uma fatura com itens de **produto** é **marcada como paga**, a NFC-e é emitida automaticamente
+- Isso pode ser **desativado** no checkbox **Emissão automática ao confirmar pagamento** da configuração NF-e/NFC-e — a nota passa a ser emitida apenas manualmente pelo botão **Emitir Nota Fiscal** na fatura paga
 - Ao mesmo tempo, o estoque dos produtos é **deduzido automaticamente**
 - Comando `nfe:emit-pending` emite notas pendentes a cada 10 min
 

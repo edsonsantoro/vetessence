@@ -22,8 +22,9 @@ class NfseConfigController extends Controller
     public function update(Request $request)
     {
         $rules = [
-            'provider' => 'required|in:webmania,focusnfe,spedy,nfeio',
+            'provider' => 'required|in:webmania,nfeio',
             'ambiente' => 'required|in:homologacao,producao',
+            'emit_auto' => 'nullable|boolean',
         ];
 
         $provider = $request->input('provider', 'webmania');
@@ -31,13 +32,6 @@ class NfseConfigController extends Controller
         $providerRules = match ($provider) {
             'webmania' => [
                 'webmania_access_token' => 'required|string',
-            ],
-            'focusnfe' => [
-                'focusnfe_token' => 'required|string',
-            ],
-            'spedy' => [
-                'spedy_api_key' => 'required|string',
-                'spedy_api_secret' => 'required|string',
             ],
             'nfeio' => [
                 'nfeio_api_key' => 'required|string',
@@ -50,7 +44,10 @@ class NfseConfigController extends Controller
 
         NfseConfig::updateOrCreate(
             ['id' => NfseConfig::first()?->id],
-            $validated + ['is_active' => true],
+            $validated + [
+                'emit_auto' => $request->boolean('emit_auto'),
+                'is_active' => true,
+            ],
         );
 
         return redirect()

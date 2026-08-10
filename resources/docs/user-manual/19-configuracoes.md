@@ -113,13 +113,12 @@ A chave PIX cadastrada é usada para gerar o payload EMV BR Code, exibido como Q
    - **NFS-e** (serviços): configurar provedor de nota fiscal de serviços
    - **NF-e / NFC-e** (produtos): configurar provedor de nota fiscal de produtos
 3. Para cada card, configure:
-   - **Provedor**: Webmania® ou NFE.io (FocusNFe também disponível para NF-e/NFC-e)
+   - **Provedor**: Webmania® ou NFE.io
    - **Ambiente**: Homologação (testes) ou Produção
 4. Preencha as credenciais conforme o provedor escolhido:
    - **Webmania® NFSe**: Access Token (Bearer)
    - **Webmania® NFe**: Consumer Key, Consumer Secret, Access Token, Access Token Secret
    - **NFE.io**: API Key, Company ID
-   - **FocusNFe**: API Token
 5. Ative a configuração
 
 > **Dados fiscais por filial**: CNPJ, código IBGE do município, regime tributário e série da nota são configurados no **cadastro da filial** (Configurações > Unidades), não na tela de Config. NF.
@@ -148,7 +147,7 @@ A chave PIX cadastrada é usada para gerar o payload EMV BR Code, exibido como Q
 
 > **Observações**: A sugestão é manual (não automática). O prompt é construído com dados do paciente (espécie, raça, idade, sexo), sinais vitais, queixa principal, anamnese e exame físico. A temperatura baixa (0.3) mantém as sugestões profissionais e determinísticas.
 
-### NFSe / NFC-e / NF-e (Webmania®, NFE.io, FocusNFe)
+### NFSe / NFC-e / NF-e (Webmania®, NFE.io)
 - **Arquitetura**: Adapter Pattern — interface única para múltiplos provedores
 - **Fluxo**: Fatura paga → NFC-e (itens produto) + NFSe (itens serviço) → XML/PDF disponíveis
 - **NF-e** (modelo 55): emitida apenas para transferências de estoque entre unidades

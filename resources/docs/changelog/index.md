@@ -1,6 +1,20 @@
 # Changelog
 
+## [Não versionado] — 2026-08-10
+
+## [v1.0.2] — 2026-08-10
+
+### Alterado
+- **Provedores fiscais desativados**: FocusNFe e Spedy desativados na emissão de notas (NFS-e, NFC-e e NF-e). Deixaram de ser selecionáveis na Configuração NF — a validação aceita apenas Webmania® e NFE.io. As classes `FocusNfeProvider`/`SpedyProvider` e os mapeamentos de resolução foram mantidos no código (configs existentes continuam funcionando). Referências removidas da documentação (manuais usuário e técnico).
+- **Rodapé corrigido**: lado esquerdo passa a exibir o **nome da clínica** vindo do branding (`© 2026 {clínica}`) em vez do texto fixo "Clínica Veterinária"; lado direito exibe **VetEssence** com a versão atual (`config('app.version')`, arquivo `VERSION`) em vez do "v1.0" fixo e do nome de clínica do branding.
 ## [Não versionado] — 2026-08-03
+
+### Adicionado
+- **Emissão automática de notas opcional**: checkbox `Emissão automática ao confirmar pagamento` nas configurações NFS-e e NF-e/NFC-e (`emit_auto`). Se desativado, a nota deixa de ser emitida automaticamente no pagamento e passa a ser emitida apenas manualmente pelo botão "Emitir Nota Fiscal" na fatura paga. Comportamento padrão mantido (auto-emissão ativa).
+- **Autoversionamento**: comando `php artisan version:bump [major|minor|patch|X.Y.Z]` com fonte única em `VERSION`; atualiza `package.json`, README badge, changelog, tag git e GitHub Release; exibe versão atual na página de Auto-Update
+
+### Corrigido
+- Listener `EmitirNfseOnPaid`/`EmitirNfeOnPaid` respeitam a flag `emit_auto` antes de emitir
 
 ## [v1.0.1] — 2026-08-03
 

@@ -29,6 +29,10 @@ class EmitirNfeOnPaid
             return;
         }
 
+        if (!$config->emit_auto) {
+            return;
+        }
+
         $result = $this->nfeService->emitirNfce($invoice);
 
         if (!$result->success) {

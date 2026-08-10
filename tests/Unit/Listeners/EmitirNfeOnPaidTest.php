@@ -113,4 +113,28 @@ class EmitirNfeOnPaidTest extends ModuleTestCase
 
         $this->addToAssertionCount(1);
     }
+
+    public function test_does_not_emit_if_emit_auto_disabled(): void
+    {
+        $invoice = Invoice::factory()->create();
+        $invoice->items()->create([
+            'description' => 'Produto',
+            'quantity' => 1,
+            'unit_price' => 100,
+            'total' => 100,
+            'item_type' => 'product',
+            'branch_id' => $invoice->branch_id,
+        ]);
+
+        $config = NfeConfig::create(['provider' => 'focusnfe', 'is_active' => true, 'emit_auto' => false]);
+
+        $nfeService = \Mockery::mock(NfeService::class);
+        $nfeService->shouldReceive('getConfig')->andReturn($config);
+        $nfeService->shouldNotReceive('emitirNfce');
+
+        $listener = new EmitirNfeOnPaid($nfeService);
+        $listener->handle(new InvoicePaid($invoice));
+
+        $this->addToAssertionCount(1);
+    }
 }

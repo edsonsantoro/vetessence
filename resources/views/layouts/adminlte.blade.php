@@ -847,9 +847,9 @@
         <!-- Footer -->
         <footer class="main-footer">
             <div class="float-right d-none d-sm-inline">
-                <strong>{{ branding('clinic_name', 'VetEssence') }}</strong> v1.0
+                <strong>VetEssence</strong> v{{ config('app.version') }}
             </div>
-            <strong>&copy; {{ date('Y') }} Clínica Veterinária</strong>
+            <strong>&copy; {{ date('Y') }} {{ branding('clinic_name', config('app.name', 'VetEssence')) }}</strong>
         </footer>
     </div>
     @stack('modals')

@@ -59,6 +59,15 @@
                         </div>
                     </div>
 
+                    <div class="form-check mt-3">
+                        <input type="checkbox" class="form-check-input" name="emit_auto" id="nfse_emit_auto" value="1" {{ old('emit_auto', $nfseConfig->emit_auto ?? true) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="nfse_emit_auto">
+                            Emissão automática ao confirmar pagamento
+                        </label>
+                        <br>
+                        <small class="text-muted">Se desativado, a NFS-e deverá ser emitida manualmente pelo botão "Emitir Nota Fiscal" na fatura paga.</small>
+                    </div>
+
                     {{-- WEBMANIA --}}
                     <div class="provider-fields" data-provider="webmania" data-group="nfse">
                         <h6 class="text-primary mt-3"><i class="fas fa-globe mr-1"></i>Credenciais Webmania®</h6>
@@ -139,6 +148,15 @@
                                 @error('ambiente') <span class="invalid-feedback">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <div class="form-check mt-3">
+                        <input type="checkbox" class="form-check-input" name="emit_auto" id="nfe_emit_auto" value="1" {{ old('emit_auto', $nfeConfig->emit_auto ?? true) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="nfe_emit_auto">
+                            Emissão automática ao confirmar pagamento
+                        </label>
+                        <br>
+                        <small class="text-muted">Se desativado, a NF-e/NFC-e deverá ser emitida manualmente pelo botão "Emitir Nota Fiscal" na fatura paga.</small>
                     </div>
 
                     {{-- NFE.IO --}}

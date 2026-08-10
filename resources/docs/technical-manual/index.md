@@ -35,8 +35,8 @@ app/
     └─ Services/            # Classes de serviço (StockForecastService, VetAvailabilityService, etc.)
     ├─ Communication/   # WhatsAppProvider, SmsProvider
     ├─ Insurance/       # PortoSeguroProvider, PetloveProvider
-    ├─ Nfe/             # NfeProvider, NfeService, FocusNfeProvider, NfeIoProvider, WebmaniaProvider
-    └─ Nfse/            # NfseProvider, NfseService, WebmaniaProvider
+    ├─ Nfe/             # NfeProvider, NfeService, NfeIoProvider, WebmaniaProvider
+    └─ Nfse/            # NfseProvider, NfseService, WebmaniaProvider, NfeIoProvider
 resources/
 ├─ docs/                # Documentação em Markdown (source)
 ├─ views/
@@ -275,8 +275,6 @@ Configurado via painel admin em **Configurações > Notificações** (aba E-mail
 | Provedor | Classe | Autenticação | Endpoints |
 |----------|--------|-------------|-----------|
 | **Webmania®** | `WebmaniaProvider` | Bearer token (`webmania_access_token`) | `POST /2/nfse/emissao/`, `GET /2/nfse/{id}/`, `PUT /2/nfse/cancelar` |
-| **FocusNFe** | `FocusNfeProvider` | Bearer token (`focus_api_token`) | `POST /v2/nfse?ref={ref}`, `GET /v2/nfse/{ref}`, `DELETE /v2/nfse/{ref}` |
-| **Spedy** | `SpedyProvider` | API Key (`spedy_api_key`) | `POST /v1/nfse`, `GET /v1/nfse/{id}`, `POST /v1/nfse/{id}/cancelar` |
 | **NFE.io** | `NfeIoProvider` | Basic Auth (`api_key` + `company_id`) | `POST /v1/companies/{id}/serviceinvoices`, `GET /v1/companies/{id}/serviceinvoices/{id}`, `DELETE /v1/companies/{id}/serviceinvoices/{id}` |
 
 ### NFe / NFC-e (Product Invoices)
@@ -293,7 +291,6 @@ Configurado via painel admin em **Configurações > Notificações** (aba E-mail
 | Provedor | Classe | Autenticação | Endpoints NFC-e | Endpoints NF-e |
 |----------|--------|-------------|-----------------|----------------|
 | **Webmania®** | `WebmaniaProvider` | Consumer-Key/Secret + Access-Token/Secret | `POST /api/1/nfe/emissao/` (modelo: 65) | `POST /api/1/nfe/emissao/`, `PUT /api/1/nfe/cancelar/` |
-| **FocusNFe** | `FocusNfeProvider` | Bearer token (`focus_api_token`) | `POST /v2/nfc?ref={ref}` | `POST /v2/nfe?ref={ref}`, `DELETE /v2/nfe/{ref}` |
 | **NFE.io** | `NfeIoProvider` | Basic Auth (`api_key` + `company_id`) | `POST /v2/companies/{id}/consumerinvoices` | `POST /v2/companies/{id}/productinvoices` |
 
 **Persistência:** `App\Models\NfeInvoice` com campo `tipo` (`nfe` ou `nfce`)

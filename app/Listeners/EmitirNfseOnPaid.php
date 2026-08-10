@@ -29,6 +29,10 @@ class EmitirNfseOnPaid
             return;
         }
 
+        if (!$config->emit_auto) {
+            return;
+        }
+
         $result = $this->nfseService->emitir($invoice);
 
         if (!$result->success) {

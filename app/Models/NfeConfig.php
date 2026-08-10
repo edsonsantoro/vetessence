@@ -10,7 +10,7 @@ class NfeConfig extends Model
     use HasFactory;
 
     protected $fillable = [
-        'provider', 'ambiente',
+        'provider', 'ambiente', 'emit_auto',
         'focusnfe_token', 'nfeio_api_key', 'nfeio_company_id',
         'webmania_consumer_key', 'webmania_consumer_secret',
         'webmania_access_token', 'webmania_access_token_secret',
@@ -19,5 +19,6 @@ class NfeConfig extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'emit_auto' => 'boolean',
     ];
 }
