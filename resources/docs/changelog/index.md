@@ -2,6 +2,9 @@
 
 ## [Não versionado] — 2026-08-10
 
+### Alterado
+- **Gateways de pagamento na documentação**: README, manual técnico e manual do usuário passam a citar apenas os gateways disponíveis para uso — **PIX**, **Mercado Pago** e **MultiplusCard (PinPDV)**. Removidas as referências a Payer (suspenso), PagSeguro, Stripe e Stone (não disponíveis na UI).
+
 ## [v1.0.2] — 2026-08-10
 
 ### Alterado

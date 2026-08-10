@@ -301,7 +301,7 @@ Configurado via painel admin em **Configurações > Notificações** (aba E-mail
 
 #### Gateway de Pagamento
 
-**Status:** **PIX**, **Mercado Pago** e **MultiplusCard (PinPDV)** ativos. **Payer API Gateway** implementado e suspenso (parceria encerrada, código mantido). PagSeguro e Stripe previstos. **Stone** inativo (era PDV/maquininha, removido).
+**Status:** **PIX**, **Mercado Pago** e **MultiplusCard (PinPDV)** disponíveis para uso.
 
 **Arquitetura:** Multi-provedor com Interface + Factory Pattern + Service Layer.
 
@@ -317,17 +317,8 @@ Configurado via painel admin em **Configurações > Notificações** (aba E-mail
 | Provider | Classe | SDK | Canais | Conflito |
 |----------|--------|-----|--------|----------|
 | PIX | `PixStaticProvider` + `PixService` | `endroid/qr-code` | portal / ambos | Apenas com outro PIX |
-| Mercado Pago | `MercadoPagoProvider` | `mercadopago/dx-php` | portal (checkout cartão, saldo) | Com não-PIX no mesmo canal |
+| Mercado Pago | `MercadoPagoProvider` | `mercadopago/dx-php` | portal / pdv (checkout cartão, saldo e Point) | Com não-PIX no mesmo canal |
 | MultiplusCard | `MultiplusCardProvider` | HTTP direto (PinPDV API) | pdv / ambos (SmartPOS) | Com não-PIX no mesmo canal |
-
-**Providers inativos (código existente):**
-
-| Provider | Classe | SDK | Motivo |
-|----------|--------|-----|--------|
-| PagSeguro | `PagSeguroProvider` | `pagseguro/pagseguro-php-sdk` | Previsto |
-| Stripe | `StripeProvider` | `stripe/stripe-php` | Previsto |
-| Payer | `PayerProvider` | HTTP direto (REST) | Suspenso (parceria encerrada) |
-| Stone | `StoneProvider` | HTTP direto (OAuth) | Removido (era PDV/maquininha) |
 
 **Serviço PIX:**
 
@@ -350,12 +341,12 @@ Configurado via painel admin em **Configurações > Notificações** (aba E-mail
 
 | Campo | Descrição |
 |-------|-----------|
-| `provider` | Nome do provedor (`pix`, `mercadopago`, `multicard`, `payer` suspenso) |
+| `provider` | Nome do provedor (`pix`, `mercadopago`, `multicard`) |
 | `channel` | Canal: `portal`, `pdv` ou `both` |
 | `public_key` | Chave PIX (CPF, CNPJ, e-mail, telefone ou EVP) |
 | `secret_key` | Access Token (MP), Token de acesso (MultiplusCard) |
 | `branch_id` | Unidade específica ou null (todas as unidades) |
-| `config` | JSON: `url` (PIX dinâmico), `terminal_id` (MP/MultiplusCard), `pinpdv_id` (MultiplusCard), `ambiente` (MultiplusCard), ou campos Payer (`company_id`, `store_id`, `automation_name`, `client_id`, `username`, `user_alias`) |
+| `config` | JSON: `url` (PIX dinâmico), `terminal_id` (MP/MultiplusCard), `pinpdv_id` (MultiplusCard), `ambiente` (MultiplusCard) |
 
 **Regras de conflito entre gateways:**
 - PIX → só conflita com outro PIX (coexiste com MP e MultiplusCard)

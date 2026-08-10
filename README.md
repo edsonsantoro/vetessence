@@ -86,7 +86,7 @@ O **VetEssence** é um sistema ERP completo para clínicas veterinárias, constr
   - Regras de cobertura configuráveis (por tipo de item e/ou serviço específico, com % de cobertura, valor máximo, pré-autorização e limite anual)
   - Desconto automático aplicado em faturas de consultas, hospedagens, exames e internações
 - **NFSe / NFC-e** — Nota Fiscal de Serviços Eletrônica e Nota Fiscal de Consumidor Eletrônica via **Webmania** ou **NFE.io**, emissão manual ou automática
-- **Pagamentos** — Multi-forma (dinheiro, cartão, PIX via gateway), parcelamentos. **Gateway atualmente disponível: PIX**. Mercado Pago, PagSeguro, Stripe e Stone estão previstos para próximas versões.
+- **Pagamentos** — Multi-forma (dinheiro, cartão, PIX via gateway), parcelamentos. **Gateways disponíveis: PIX, Mercado Pago e MultiplusCard (PinPDV)**.
 - **Conciliação Bancária** — Importação de extrato OFX/QIF/CSV, correspondência automática
 - **Comissões** — Cálculo de comissão por procedimento/produto por veterinário
 - **Guias de Convênio** — Faturamento de convênios, claims, auto-envio via API
@@ -122,7 +122,7 @@ O **VetEssence** é um sistema ERP completo para clínicas veterinárias, constr
 - **Unidades (Multi-filiais)** — Dados escopados por filial, dashboard corporativo
 - **Backup** — Backup automatizado com retenção configurável
 - **Auto-Update** — Atualização via GitHub diretamente do painel admin
-- **Gateways de Pagamento** — PIX (ativo); Mercado Pago, PagSeguro, Stripe e Stone previstos para próximas versões
+- **Gateways de Pagamento** — PIX, Mercado Pago e MultiplusCard (PinPDV)
 - **Rebranding** — Personalização de logo, cores, nome da clínica
 - **Dashboard Corporativo** — Indicadores consolidados de todas as filiais
 - **Documentação do Sistema (/docs)** — Manuais do usuário (26 módulos) em Markdown
@@ -141,7 +141,7 @@ O **VetEssence** é um sistema ERP completo para clínicas veterinárias, constr
 | PDF | Dompdf |
 | QR Code | endroid/qr-code |
 | Nota Fiscal (NFe/NFCe/NFSe) | Webmania, NFE.io |
-| Pagamentos | PIX (ativo); MultiplusCard PinPDV (PDV); Mercado Pago (portal); Payer API Gateway (suspenso) |
+| Pagamentos | PIX; Mercado Pago; MultiplusCard (PinPDV) |
 | IA | OpenAI, Anthropic, Gemini, Grok, Ollama |
 | Testes | PHPUnit (675 testes, 0 falhas), Laravel Dusk (45 testes E2E em 9 fluxos) |
 

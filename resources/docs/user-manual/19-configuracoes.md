@@ -75,8 +75,6 @@ O sistema oferece **três provedores** de gateway, cada um com características 
 | **Mercado Pago** | Portal | Checkout online (cartão/saldo) | Com não-PIX no mesmo canal |
 | **MultiplusCard (PinPDV)** | PDV / Ambos | Cobrança no SmartPOS, webhook+polling | Com não-PIX no mesmo canal |
 
-> **Payer API Gateway** foi implementado e posteriormente desativado (parceria suspensa). Permanece no código para reativação futura.
-
 #### Regras de Ativação
 
 - **PIX** pode ser ativado **junto com** Mercado Pago e MultiplusCard — não há conflito entre PIX e outros provedores
