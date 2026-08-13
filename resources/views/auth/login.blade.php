@@ -50,11 +50,18 @@
 </form>
 @endsection
 
-@push('after_login_card')
+@push('after_login_box')
     @if(config('demo.enabled'))
     <style>
-        /* Em modo demo a tabela de contas usa fontes menores para caber sem
-           scroll horizontal (o card de login mantém a largura padrão). */
+        /* Card de contas de demonstração: container INDEPENDENTE do card de
+           login. Cada card tem sua própria largura/altura; a largura de um não
+           depende do outro. */
+        .demo-box {
+            width: 100%;
+            max-width: 600px;
+            margin: 1rem auto 0;
+        }
+        @media (max-width: 576px) { .demo-box { width: 92%; } }
         .demo-accounts .card-header { padding: .4rem .75rem; }
         .demo-accounts .card-header h3 { font-size: .95rem; margin: 0; }
         .demo-accounts .card-body { padding: .5rem .6rem !important; }
@@ -64,7 +71,7 @@
         .demo-accounts table code { font-size: .76rem; }
         .demo-accounts .demo-note { font-size: .72rem; margin-top: .4rem; }
     </style>
-    <div class="mt-3 demo-accounts">
+    <div class="demo-box demo-accounts">
         <div class="card card-outline card-secondary">
             <div class="card-header">
                 <h3 class="card-title"><i class="fas fa-user-circle mr-1"></i> Contas de demonstração</h3>
