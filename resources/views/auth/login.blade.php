@@ -52,33 +52,45 @@
 
 @push('after_login_card')
     @if(config('demo.enabled'))
-    <div class="mt-3">
+    <style>
+        /* Em modo demo a tela de login fica mais larga para a tabela de contas
+           caber sem scroll horizontal. */
+        .login-box { width: 100% !important; max-width: 600px; }
+        @media (max-width: 576px) { .login-box { width: 92% !important; } }
+        .demo-accounts .card-header { padding: .4rem .75rem; }
+        .demo-accounts .card-header h3 { font-size: .95rem; margin: 0; }
+        .demo-accounts .card-body { padding: .5rem .6rem !important; }
+        .demo-accounts table { font-size: .78rem; margin-bottom: 0; }
+        .demo-accounts table th,
+        .demo-accounts table td { padding: .25rem .45rem; white-space: nowrap; }
+        .demo-accounts table code { font-size: .76rem; }
+        .demo-accounts .demo-note { font-size: .72rem; margin-top: .4rem; }
+    </style>
+    <div class="mt-3 demo-accounts">
         <div class="card card-outline card-secondary">
             <div class="card-header">
-                <h3 class="card-title mb-0"><i class="fas fa-user-circle mr-1"></i> Contas de demonstração</h3>
+                <h3 class="card-title"><i class="fas fa-user-circle mr-1"></i> Contas de demonstração</h3>
             </div>
-            <div class="card-body p-2">
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
-                        <thead>
-                            <tr>
-                                <th>Perfil</th>
-                                <th>Email</th>
-                                <th>Senha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach(config('demo.accounts') as $account)
-                            <tr>
-                                <td>{{ $account['profile'] }}</td>
-                                <td><code>{{ $account['email'] }}</code></td>
-                                <td><code>{{ $account['password'] }}</code></td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <p class="text-muted small mb-0 mt-2">
+            <div class="card-body">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead>
+                        <tr>
+                            <th>Perfil</th>
+                            <th>Email</th>
+                            <th>Senha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(config('demo.accounts') as $account)
+                        <tr>
+                            <td>{{ $account['profile'] }}</td>
+                            <td><code>{{ $account['email'] }}</code></td>
+                            <td><code>{{ $account['password'] }}</code></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                <p class="text-muted demo-note mb-0">
                     Ambiente de demonstração: as senhas destas contas não podem ser alteradas.
                 </p>
             </div>
