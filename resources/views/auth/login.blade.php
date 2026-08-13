@@ -53,10 +53,8 @@
 @push('after_login_card')
     @if(config('demo.enabled'))
     <style>
-        /* Em modo demo a tela de login fica mais larga para a tabela de contas
-           caber sem scroll horizontal. */
-        .login-box { width: 100% !important; max-width: 600px; }
-        @media (max-width: 576px) { .login-box { width: 92% !important; } }
+        /* Em modo demo a tabela de contas usa fontes menores para caber sem
+           scroll horizontal (o card de login mantém a largura padrão). */
         .demo-accounts .card-header { padding: .4rem .75rem; }
         .demo-accounts .card-header h3 { font-size: .95rem; margin: 0; }
         .demo-accounts .card-body { padding: .5rem .6rem !important; }
