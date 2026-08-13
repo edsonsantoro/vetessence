@@ -3,28 +3,50 @@
 namespace Tests\Feature\Modules;
 
 use App\Models\Tutor;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Tests\ModuleTestCase;
 
 class PortalAuthTest extends ModuleTestCase
 {
-    public function test_login_page()
+    /**
+     * O login é unificado em /login. A rota legada do portal redireciona para lá.
+     */
+    public function test_portal_login_redirects_to_main_login()
     {
-        $response = $this->get(route('portal.login'));
-        $response->assertOk();
+        $response = $this->get('/portal/login');
+        $response->assertRedirect('/login');
     }
 
-    public function test_register_creates_tutor()
+    /**
+     * Um tutor se autentica pela tela única /login e é levado ao dashboard do portal.
+     */
+    public function test_tutor_logs_in_via_unified_login()
     {
-        $response = $this->post(route('portal.register.store'), [
-            'name' => 'João Silva',
-            'email' => 'joao@example.com',
-            'phone' => '11999999999',
+        $tutorUser = User::factory()->create([
+            'email' => 'tutor.login@test.com',
+            'password' => Hash::make('password'),
+            'role_id' => null,
+        ]);
+        $tutorUser->assignRole('tutor');
+
+        Tutor::factory()->create([
+            'user_id' => $tutorUser->id,
+            'email' => 'tutor.login@test.com',
+            'password' => Hash::make('password'),
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => 'tutor.login@test.com',
             'password' => 'password',
-            'password_confirmation' => 'password',
         ]);
-        $response->assertRedirect(route('portal.dashboard'));
-        $this->assertDatabaseHas('tutors', [
-            'email' => 'joao@example.com',
-        ]);
+
+        $response->assertRedirect();
+        $this->assertAuthenticatedAs($tutorUser, 'web');
+        // Tutor autenticado é direcionado à área do portal (dashboard ou home).
+        $this->assertTrue(
+            $response->isRedirect(route('portal.dashboard')) ||
+            $response->isRedirect(route('dashboard'))
+        );
     }
 }

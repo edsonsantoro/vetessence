@@ -47,9 +47,12 @@
         <a href="{{ route('password.request') }}" class="text-sm">Esqueceu a senha?</a>
         @endunless
     </div>
+</form>
+@endsection
 
+@push('after_login_card')
     @if(config('demo.enabled'))
-    <div class="mt-4">
+    <div class="mt-3">
         <div class="card card-outline card-secondary">
             <div class="card-header">
                 <h3 class="card-title mb-0"><i class="fas fa-user-circle mr-1"></i> Contas de demonstração</h3>
@@ -82,5 +85,4 @@
         </div>
     </div>
     @endif
-</form>
-@endsection
+@endpush
