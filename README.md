@@ -11,7 +11,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
 [![GitHub stars](https://img.shields.io/github/stars/hlmitecnologia/vetessence?style=social)](https://github.com/hlmitecnologia/vetessence)
 [![GitHub issues](https://img.shields.io/github/issues/hlmitecnologia/vetessence)](https://github.com/hlmitecnologia/vetessence/issues)
-[![Versão](https://img.shields.io/badge/versão-v1.0.3-blue.svg)](https://github.com/hlmitecnologia/vetessence/releases)
+[![Versão](https://img.shields.io/badge/versão-v1.1.0-blue.svg)](https://github.com/hlmitecnologia/vetessence/releases)
 
 ---
 
@@ -155,9 +155,17 @@ Acesse [**demo.vetessence.com.br**](https://demo.vetessence.com.br) para testar 
 | Super Admin | `super@vet.com` | `super123` |
 | Admin | `admin@vet.com` | `admin123` |
 | Veterinário | `vet@vet.com` | `vet123` |
+| Veterinário | `vet2@vet.com` | `vet2123` |
 | Recepcionista | `recep@vet.com` | `recep123` |
+| Recepcionista | `recep2@vet.com` | `recep2123` |
 | Financeiro | `financeiro@vet.com` | `fin123` |
-| Tutor (portal) | `tutor@vet.com` | `tutor123` |
+| Super Financeiro | `superfin@vet.com` | `superfin123` |
+| Estoque | `estoque@vet.com` | `est123` |
+| RH | `rh@vet.com` | `rh123` |
+| Auditor | `auditor@vet.com` | `auditor123` |
+| Tutor | `tutor@vet.com` | `tutor123` |
+
+> Em ambiente de demonstração as senhas das contas acima ficam bloqueadas para alteração, e a tela de login exibe esta tabela. O login é único (`/login`) para todos os perfis, inclusive o Tutor.
 
 ---
 

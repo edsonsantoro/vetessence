@@ -11,57 +11,68 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    /**
+     * Contas padrão (fallback) caso config('demo.accounts') não esteja disponível.
+     * Em produção a lista é lida de config/demo.php para manter seeder, tabela
+     * de login e README sincronizados.
+     */
+    protected array $fallbackAccounts = [
+        ['name' => 'Super Administrador', 'email' => 'super@vet.com', 'password' => 'super123', 'role' => 'super-admin'],
+        ['name' => 'Administrador', 'email' => 'admin@vet.com', 'password' => 'admin123', 'role' => 'admin'],
+        ['name' => 'Dr. João Silva', 'email' => 'vet@vet.com', 'password' => 'vet123', 'role' => 'veterinario'],
+        ['name' => 'Dra. Ana Costa', 'email' => 'vet2@vet.com', 'password' => 'vet2123', 'role' => 'veterinario'],
+        ['name' => 'Paula Recepcionista', 'email' => 'recep@vet.com', 'password' => 'recep123', 'role' => 'recepcionista'],
+        ['name' => 'Carlos Recepcionista', 'email' => 'recep2@vet.com', 'password' => 'recep2123', 'role' => 'recepcionista'],
+        ['name' => 'Carlos Financeiro', 'email' => 'financeiro@vet.com', 'password' => 'fin123', 'role' => 'financeiro'],
+        ['name' => 'Daniel Super Financeiro', 'email' => 'superfin@vet.com', 'password' => 'superfin123', 'role' => 'super-financial'],
+        ['name' => 'Ana Estoque', 'email' => 'estoque@vet.com', 'password' => 'est123', 'role' => 'estoque'],
+        ['name' => 'Paula RH', 'email' => 'rh@vet.com', 'password' => 'rh123', 'role' => 'human-resources'],
+        ['name' => 'Jorge Auditor', 'email' => 'auditor@vet.com', 'password' => 'auditor123', 'role' => 'auditor'],
+        ['name' => 'Maria Tutor', 'email' => 'tutor@vet.com', 'password' => 'tutor123', 'role' => 'tutor'],
+    ];
+
     public function run()
     {
-        $adminRole = Role::where('slug', 'admin')->first();
-        $vetRole = Role::where('slug', 'veterinario')->first();
-        $recepRole = Role::where('slug', 'recepcionista')->first();
-        $financeiroRole = Role::where('slug', 'financeiro')->first();
-        $superFinRole = Role::where('slug', 'super-financial')->first();
-        $estoqueRole = Role::where('slug', 'estoque')->first();
-        $hrRole = Role::where('slug', 'human-resources')->first();
-        $tutorRole = Role::where('slug', 'tutor')->first();
-        $auditorRole = Role::where('slug', 'auditor')->first();
+        $configAccounts = config('demo.accounts');
+        $accounts = is_array($configAccounts) && count($configAccounts) > 0
+            ? $configAccounts
+            : $this->fallbackAccounts;
 
-        $superAdminRole = Role::where('slug', 'super-admin')->first();
-
-        $users = [
-            ['name' => 'Super Administrador', 'email' => 'super@vet.com', 'password' => 'super123', 'role' => $superAdminRole ?? $adminRole],
-            ['name' => 'Administrador', 'email' => 'admin@vet.com', 'password' => 'admin123', 'role' => $adminRole],
-            ['name' => 'Dr. João Silva', 'email' => 'vet@vet.com', 'password' => 'vet123', 'role' => $vetRole],
-            ['name' => 'Dra. Ana Costa', 'email' => 'vet2@vet.com', 'password' => 'vet2123', 'role' => $vetRole],
-            ['name' => 'Paula Recepcionista', 'email' => 'recep@vet.com', 'password' => 'recep123', 'role' => $recepRole],
-            ['name' => 'Carlos Recepcionista', 'email' => 'recep2@vet.com', 'password' => 'recep2123', 'role' => $recepRole],
-            ['name' => 'Carlos Financeiro', 'email' => 'financeiro@vet.com', 'password' => 'fin123', 'role' => $financeiroRole],
-            ['name' => 'Daniel Super Financeiro', 'email' => 'superfin@vet.com', 'password' => 'superfin123', 'role' => $superFinRole],
-            ['name' => 'Ana Estoque', 'email' => 'estoque@vet.com', 'password' => 'est123', 'role' => $estoqueRole],
-            ['name' => 'Paula RH', 'email' => 'rh@vet.com', 'password' => 'rh123', 'role' => $hrRole],
-            ['name' => 'Jorge Auditor', 'email' => 'auditor@vet.com', 'password' => 'auditor123', 'role' => $auditorRole],
-            ['name' => 'Maria Tutor', 'email' => 'tutor@vet.com', 'password' => 'tutor123', 'role' => $tutorRole],
-        ];
+        // Mapeia nome amigável -> email para derivar o nome do usuário quando
+        // o config (sem 'name') for a fonte.
+        $namesByEmail = collect($this->fallbackAccounts)->pluck('name', 'email')->toArray();
 
         $defaultBranchId = Branch::where('is_main', true)->value('id');
 
-        foreach ($users as $user) {
+        foreach ($accounts as $account) {
+            $role = Role::where('slug', $account['role'])->first();
+            if (!$role) {
+                continue;
+            }
+
+            $email = $account['email'];
+            $name = $account['name']
+                ?? ($namesByEmail[$email] ?? ucfirst(explode('@', $email)[0]));
+
             $u = User::firstOrCreate(
-                ['email' => $user['email']],
+                ['email' => $email],
                 [
-                    'name' => $user['name'],
-                    'password' => Hash::make($user['password']),
-                    'role_id' => $user['role']->id,
+                    'name' => $name,
+                    'password' => Hash::make($account['password']),
+                    'role_id' => $role->id,
                     'branch_id' => $defaultBranchId,
                     'is_active' => true,
-                    'is_veterinarian' => $user['role']?->slug === 'super-admin',
+                    'is_veterinarian' => $account['role'] === 'super-admin',
                 ]
             );
 
-            if ($user['role']->slug === 'tutor') {
+            if ($account['role'] === 'tutor') {
                 Tutor::updateOrCreate(
                     ['user_id' => $u->id],
                     [
-                        'name' => $user['name'],
-                        'email' => $user['email'],
-                        'password' => Hash::make($user['password']),
+                        'name' => $name,
+                        'email' => $email,
+                        'password' => Hash::make($account['password']),
                         'cpf' => '111.222.333-44',
                         'phone' => '(11) 98765-0000',
                         'address' => 'Rua dos Tutores, 100',

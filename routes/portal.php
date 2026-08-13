@@ -1,9 +1,6 @@
 <?php
 
 use App\Http\Controllers\Portal\Auth\LoginController;
-use App\Http\Controllers\Portal\Auth\RegisterController;
-use App\Http\Controllers\Portal\Auth\ForgotPasswordController;
-use App\Http\Controllers\Portal\Auth\ResetPasswordController;
 use App\Http\Controllers\Portal\DashboardController;
 use App\Http\Controllers\Portal\PetController;
 use App\Http\Controllers\Portal\AppointmentController;
@@ -16,19 +13,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'login')->name('portal.home');
 
-Route::middleware('guest:tutor')->group(function () {
-    Route::get('login', [LoginController::class, 'create'])->name('portal.login');
-    Route::post('login', [LoginController::class, 'store'])->name('portal.login.store');
-
-    Route::get('register', [RegisterController::class, 'create'])->name('portal.register');
-    Route::post('register', [RegisterController::class, 'store'])->name('portal.register.store');
-
-    Route::get('forgot-password', [ForgotPasswordController::class, 'create'])->name('portal.password.request');
-    Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('portal.password.email');
-
-    Route::get('reset-password/{token}', [ResetPasswordController::class, 'create'])->name('portal.password.reset');
-    Route::post('reset-password', [ResetPasswordController::class, 'store'])->name('portal.password.update');
-});
+// Login único: o acesso de todos os perfis (inclusive Tutor) é feito por /login.
+// As rotas de autenticação do portal foram desativadas para manter uma única
+// tela de login. Mantém-se o redirect (caminho relativo ao prefixo 'portal') para
+// não quebrar links/bookmarks antigos.
+Route::redirect('login', '/login')->name('portal.login.redirect');
+Route::redirect('register', '/login')->name('portal.register.redirect');
+Route::redirect('forgot-password', '/login')->name('portal.password.request.redirect');
+Route::redirect('reset-password', '/login')->name('portal.password.reset.redirect');
 
 // Documentation diagrams — slug sem extensão para nginx não interceptar
 Route::get('docs/imagem/{slug}', function (string $slug) {

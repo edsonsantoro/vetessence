@@ -101,6 +101,11 @@ class UserController extends Controller
         $user->is_active = $request->boolean('is_active', true);
 
         if (!empty($validated['password'])) {
+            if ($user->isDemoAccount()) {
+                // Conta de demonstração: senha bloqueada para alteração.
+                return redirect()->route('users.index')
+                    ->with('error', 'Esta é uma conta de demonstração: a senha não pode ser alterada.');
+            }
             $user->password = Hash::make($validated['password']);
         }
 

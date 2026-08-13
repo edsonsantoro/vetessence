@@ -39,6 +39,14 @@ class NewPasswordController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Defesa em profundidade: mesmo com o link "Esqueceu a senha" oculto na
+        // tela de login, bloqueia a troca de senha de contas demo em ambiente demo.
+        if (config('demo.enabled')
+            && in_array($request->email, array_column((array) config('demo.accounts', []), 'email'), true)) {
+            return back()->withInput($request->only('email'))
+                ->withErrors(['email' => 'Conta de demonstração: a senha não pode ser alterada.']);
+        }
+
         // Here we will attempt to reset the user's password. If it is successful we
         // will update the password on an actual user model and persist it to the
         // database. Otherwise we will parse the error and return the response.

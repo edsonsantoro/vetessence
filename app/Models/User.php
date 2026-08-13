@@ -57,6 +57,21 @@ class User extends Authenticatable
         return $this->belongsTo(Branch::class);
     }
 
+    /**
+     * Indica se o usuário pertence a uma conta de demonstração (config/demo.php).
+     * Usado para impedir alteração de senha em ambiente de demo.
+     */
+    public function isDemoAccount(): bool
+    {
+        if (!config('demo.enabled')) {
+            return false;
+        }
+
+        $emails = array_column((array) config('demo.accounts', []), 'email');
+
+        return in_array($this->email, $emails, true);
+    }
+
     public function hasRole($roles): bool
     {
         if ($roles instanceof \Illuminate\Support\Collection) {

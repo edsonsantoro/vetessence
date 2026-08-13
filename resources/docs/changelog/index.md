@@ -1,7 +1,8 @@
 # Changelog
 
-## [Não versionado] — 2026-08-10
+## [Não versionado] — 2026-08-13
 
+## [v1.1.0] — 2026-08-13
 ## [v1.0.3] — 2026-08-10
 
 ### Alterado

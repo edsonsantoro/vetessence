@@ -43,7 +43,44 @@
     </div>
 
     <div class="text-center mt-3">
+        @unless(config('demo.enabled'))
         <a href="{{ route('password.request') }}" class="text-sm">Esqueceu a senha?</a>
+        @endunless
     </div>
+
+    @if(config('demo.enabled'))
+    <div class="mt-4">
+        <div class="card card-outline card-secondary">
+            <div class="card-header">
+                <h3 class="card-title mb-0"><i class="fas fa-user-circle mr-1"></i> Contas de demonstração</h3>
+            </div>
+            <div class="card-body p-2">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Perfil</th>
+                                <th>Email</th>
+                                <th>Senha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(config('demo.accounts') as $account)
+                            <tr>
+                                <td>{{ $account['profile'] }}</td>
+                                <td><code>{{ $account['email'] }}</code></td>
+                                <td><code>{{ $account['password'] }}</code></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    Ambiente de demonstração: as senhas destas contas não podem ser alteradas.
+                </p>
+            </div>
+        </div>
+    </div>
+    @endif
 </form>
 @endsection
