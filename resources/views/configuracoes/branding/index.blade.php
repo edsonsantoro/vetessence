@@ -9,11 +9,19 @@
                     <button type="button" class="close" data-dismiss="alert">&times;</button>
                 </div>
             @endif
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            @endif
 
             <div class="card">
                 <div class="card-header">
                     <h5><i class="fas fa-paint-brush mr-2"></i>Personalização</h5>
                 </div>
+                @if(config('demo.enabled'))
+                    <div class="alert alert-warning m-3"><i class="fas fa-exclamation-triangle mr-1"></i>A Personalização não pode ser alterada neste ambiente de demonstração.</div>
+                @endif
                 <div class="card-body">
                     <form method="POST" action="{{ route('configuracoes.branding.update') }}" enctype="multipart/form-data">
                         @csrf
@@ -185,7 +193,7 @@
                         </div>
 
                         <hr>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" {{ config('demo.enabled') ? 'disabled' : '' }}>
                             <i class="fas fa-save mr-1"></i>Salvar
                         </button>
                     </form>

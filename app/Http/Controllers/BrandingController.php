@@ -20,6 +20,11 @@ class BrandingController extends Controller
 
     public function update(Request $request)
     {
+        if (config('demo.enabled')) {
+            return redirect()->route('configuracoes.branding.index')
+                ->with('error', 'A Personalização não pode ser alterada neste ambiente de demonstração.');
+        }
+
         $request->validate([
             'clinic_name'           => 'nullable|string|max:255',
             'primary_color'         => 'nullable|regex:/^#[a-fA-F0-9]{6}$/',
