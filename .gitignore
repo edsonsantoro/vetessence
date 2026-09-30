@@ -10,6 +10,9 @@
 .env.testing
 .phpunit.result.cache
 docker-compose.override.yml
+# Dado de migração do SimplesVet: 31 MB, é entrada temporária, não código.
+# Versão canônica vive em ~/projects/agroverde/svapi/.
+/database/data/
 Homestead.json
 Homestead.yaml
 npm-debug.log

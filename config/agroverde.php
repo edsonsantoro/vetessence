@@ -111,4 +111,22 @@ return [
 
     'migrations_path' => database_path('migrations/agroverde'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Importação do SimplesVet
+    |--------------------------------------------------------------------------
+    |
+    | Arquivo JSON extraído do ERP. Fica dentro do app (e fora do git) em vez
+    | de apontar para o repositório vizinho: dentro do container o outro repo
+    | não existe, e acoplar os dois por caminho quebraria o importador.
+    |
+    | usage: php artisan agroverde:import-clientes
+    |        php artisan agroverde:import-clientes --file=/outro/caminho.json
+    |
+    */
+
+    'import' => [
+        'source_path' => database_path('data/clientes_completos.json'),
+    ],
+
 ];
