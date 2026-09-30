@@ -132,6 +132,99 @@ Baseadas em `docs/performance.md` (guia do VetEssence):
 
 > **Produção:** aumentar `innodb_buffer_pool_size` para 1.5G (servidor 4GB RAM).
 
+## Limites de Recursos
+
+Cada container tem limites de CPU e memória para evitar que um serviço
+consuma todos os recursos da máquina.
+
+| Serviço | CPU (limit) | Memória (limit) | CPU (reserve) | Memória (reserve) |
+|---------|-------------|-----------------|---------------|-------------------|
+| `app` | 2.0 | 1 GB | 0.5 | 512 MB |
+| `db` | 2.0 | 1 GB | 0.5 | 512 MB |
+| `queue` | 1.0 | 512 MB | 0.25 | 128 MB |
+| `redis` | 0.5 | 256 MB | 0.1 | 64 MB |
+| `mailpit` | 0.5 | 128 MB | 0.1 | 32 MB |
+| **Total** | **6.0** | **2.9 GB** | **1.45** | **1.25 GB** |
+
+> **Limits** = teto máximo. **Reservations** = garantia mínima.
+
+Ajuste conforme os recursos da sua máquina:
+
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: "2.0"
+      memory: 1G
+    reservations:
+      cpus: "0.5"
+      memory: 512M
+```
+
+Verificar os limites aplicados:
+
+```bash
+docker inspect agroverde-app --format '{{.HostConfig.Memory}} {{.HostConfig.NanoCpus}}'
+docker stats --no-stream
+```
+
+## Logging e Rotação
+
+Os logs são protegidos em **3 camadas**:
+
+| Camada | Onde | Config |
+|--------|------|--------|
+| **1. Daemon** | `/etc/docker/daemon.json` | `json-file`, max-size 50m, max-file 3, compress |
+| **2. Compose** | `docker-compose.yml` | `json-file`, max-size 10m, max-file 3, compress |
+| **3. Logrotate** | `/etc/logrotate.d/docker-containers.conf` | diário, size 50M, rotate 3 |
+
+A camada 2 (por container) é **mais restritiva** que a 1 (global), garantindo
+que nenhum container acumule mais de ~30 MB de log.
+
+### Logs da aplicação (Laravel)
+
+O Laravel usa `LOG_CHANNEL=daily` (rotação própria de 14 dias).
+
+Para instalar o logrotate dos logs da aplicação (fallback):
+
+```bash
+sudo ./docker/logrotate/install.sh
+```
+
+Isso cria `/etc/logrotate.d/agroverde` com:
+
+```
+storage/logs/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    create 0664 www-data www-data
+    dateext
+    dateformat -%Y-%m-%d
+    su www-data www-data
+}
+```
+
+> **Nota:** os logs do Docker **não** são incluídos aqui — já são cobertos
+> por `/etc/logrotate.d/docker-containers.conf` (política do sistema).
+> Duplicar causaria conflito.
+
+### Verificar
+
+```bash
+# Logs do Docker (tamanho atual)
+sudo du -sh /var/lib/docker/containers/*/*-json.log | sort -rh | head
+
+# Config do logrotate
+sudo logrotate -d /etc/logrotate.d/agroverde    # dry-run
+sudo logrotate -f /etc/logrotate.d/agroverde    # forçar
+
+# Timer do sistema
+systemctl list-timers logrotate.timer
+```
+
 ## Variáveis de Ambiente
 
 Podem ser sobrescritas via `.env` ou shell:

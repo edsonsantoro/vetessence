@@ -11,6 +11,20 @@
 #
 # Ver docker/README.md para detalhes.
 
+# ---------------------------------------------------------------------------
+# Configurações reutilizáveis (YAML anchors)
+# ---------------------------------------------------------------------------
+
+# Logging: rotação por container.
+# Mais restritivo que o global do daemon (50m×3) para limitar o disco.
+# 10 MB × 3 arquivos × compressão ≈ 10-15 MB efetivos por container.
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+    compress: "true"
+
 services:
   # ---------------------------------------------------------------------------
   # Aplicação (PHP 8.4 FPM + Nginx)
@@ -30,6 +44,9 @@ services:
       # --- Laravel ---
       APP_ENV: "${APP_ENV:-local}"
       APP_DEBUG: "${APP_DEBUG:-true}"
+      # Logging: canal 'daily' rotaciona automaticamente (14 dias)
+      LOG_CHANNEL: "${LOG_CHANNEL:-daily}"
+      LOG_LEVEL: "${LOG_LEVEL:-debug}"
       # --- Autorun (migrations, storage link) ---
       # Desabilitado por padrão: o vendor/ precisa existir primeiro.
       # O setup.sh roda composer install e depois habilita.
@@ -71,6 +88,17 @@ services:
     networks:
       - agroverde
     restart: unless-stopped
+    # --- Limites de recursos ---
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    # --- Logging ---
+    logging: *default-logging
 
   # ---------------------------------------------------------------------------
   # Banco de Dados (MariaDB 10.11 — mesma versão do docs/performance.md)
@@ -97,6 +125,17 @@ services:
     networks:
       - agroverde
     restart: unless-stopped
+    # --- Limites de recursos ---
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    # --- Logging ---
+    logging: *default-logging
 
   # ---------------------------------------------------------------------------
   # Redis (cache, queue, session)
@@ -112,6 +151,17 @@ services:
     networks:
       - agroverde
     restart: unless-stopped
+    # --- Limites de recursos ---
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    # --- Logging ---
+    logging: *default-logging
 
   # ---------------------------------------------------------------------------
   # Mailpit (captura de e-mails em desenvolvimento)
@@ -126,6 +176,17 @@ services:
     networks:
       - agroverde
     restart: unless-stopped
+    # --- Limites de recursos ---
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 32M
+    # --- Logging ---
+    logging: *default-logging
 
   # ---------------------------------------------------------------------------
   # Queue Worker (processa jobs em background)
@@ -146,6 +207,8 @@ services:
       - ./docker/php/99-agroverde.ini:/usr/local/etc/php/conf.d/99-agroverde.ini:ro
     environment:
       APP_ENV: "${APP_ENV:-local}"
+      LOG_CHANNEL: "${LOG_CHANNEL:-daily}"
+      LOG_LEVEL: "${LOG_LEVEL:-debug}"
       DB_CONNECTION: "mysql"
       DB_HOST: "db"
       DB_DATABASE: "${DB_DATABASE:-vetessence}"
@@ -165,6 +228,17 @@ services:
     networks:
       - agroverde
     restart: unless-stopped
+    # --- Limites de recursos ---
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    # --- Logging ---
+    logging: *default-logging
 
 volumes:
   db_data:

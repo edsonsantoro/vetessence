@@ -228,6 +228,28 @@ Configurações aplicadas (de `docs/performance.md`):
 | `docker/php/99-agroverde.ini` | OPcache 256M, memory_limit 256M, uploads 64M |
 | `docker/mariadb/99-agroverde.cnf` | innodb_buffer_pool_size 512M, slow query log |
 
+### Limites de Recursos
+
+| Serviço | CPU (limit) | Memória (limit) |
+|---------|-------------|-----------------|
+| `app` | 2.0 | 1 GB |
+| `db` | 2.0 | 1 GB |
+| `queue` | 1.0 | 512 MB |
+| `redis` | 0.5 | 256 MB |
+| `mailpit` | 0.5 | 128 MB |
+| **Total** | **6.0** | **2.9 GB** |
+
+### Logging (3 camadas)
+
+| Camada | Onde | Config |
+|--------|------|--------|
+| Daemon | `/etc/docker/daemon.json` | json-file, 50m × 3, compress |
+| Compose | `docker-compose.yml` | json-file, 10m × 3, compress |
+| Logrotate | `/etc/logrotate.d/docker-containers.conf` | diário, size 50M, rotate 3 |
+
+Logs da aplicação: `LOG_CHANNEL=daily` (14 dias) + logrotate opcional
+(`sudo ./docker/logrotate/install.sh`).
+
 Ver `docker/README.md` para detalhes completos.
 
 ---
