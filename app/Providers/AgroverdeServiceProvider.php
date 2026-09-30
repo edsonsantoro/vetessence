@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\AgroVerdeTrustProxies;
+use App\Http\Middleware\TrustProxies;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -24,6 +26,27 @@ class AgroverdeServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             base_path('config/agroverde.php'),
             'agroverde'
+        );
+
+        $this->registerTrustedProxies();
+    }
+
+    /**
+     * Faz o Laravel confiar no nginx compartilhado como proxy.
+     *
+     * O core declara `$proxies = null` em App\Http\Middleware\TrustProxies —
+     * ou seja, nenhum proxy é confiável e todo X-Forwarded-* é ignorado.
+     * Atrás do `wp-nginx` isso faz o app responder com http:// e o navegador
+     * entra em loop de redirect contra o HTTPS.
+     *
+     * Trocar o binding resolve sem editar o arquivo do core: o Kernel
+     * referencia a classe pelo nome e o container devolve esta instância.
+     */
+    protected function registerTrustedProxies(): void
+    {
+        $this->app->bind(
+            TrustProxies::class,
+            AgroVerdeTrustProxies::class
         );
     }
 

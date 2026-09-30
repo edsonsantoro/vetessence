@@ -1,7 +1,21 @@
-# AgroVerde — Ambiente de Desenvolvimento (Docker)
+# AgroVerde — Stack do fork VetEssence (Docker)
 #
 # Imagem: serversideup/php:8.4-fpm-nginx (Nginx embutido, otimizada para Laravel)
 # Configurações de performance baseadas em docs/performance.md
+#
+# ── Topologia de deployment ────────────────────────────────────────────────
+# Não há porta publicada no host. O acesso chega pelo nginx compartilhado
+# (container `wp-nginx`), que faz proxy para `agroverde-vet-app:8080` na rede
+# externa `wordpress_wp-network`. Isso elimina risco de colisão de portas com
+# os demais serviços da VPS e deixa o nginx resolvendo por DNS.
+#
+# Espera HTTP por dentro: nginx embutido do container -> 8080
+# Acesso externo: https://vet.delsantoro.com.br (vhost vet.conf no wp-nginx)
+#
+# ── Sablier ────────────────────────────────────────────────────────────────
+# Os 5 containers carregam `sablier.group=agroverde-vet`. O Sablier acorda e
+# adormece o grupo inteiro; a sessão dura 2h (definida no vhost, via
+# `session_duration=2h`). Enquanto dorme, consome zero.
 #
 # Uso:
 #   docker compose up -d          # subir
@@ -34,16 +48,21 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     image: agroverde/php:8.4
-    container_name: agroverde-app
-    ports:
-      - "${APP_PORT:-8000}:8080"
+    # NOME IMPORTANTE: `agroverde-app` pertence ao middleware de webhooks
+    # (~/projects/agroverde/middleware). Nunca reutilizar.
+    container_name: agroverde-vet-app
+    # Sem `ports:` — o acesso vem pelo nginx compartilhado via DNS de rede.
     volumes:
       - .:/var/www/html
       - ./docker/php/99-agroverde.ini:/usr/local/etc/php/conf.d/99-agroverde.ini:ro
     environment:
       # --- Laravel ---
-      APP_ENV: "${APP_ENV:-local}"
-      APP_DEBUG: "${APP_DEBUG:-true}"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-https://vet.delsantoro.com.br}"
+      # O nginx compartilhado é o proxy de entrada; Laravel precisa confiar nele
+      # para montar https:// e o IP real do visitante.
+      TRUSTED_PROXIES: "172.16.0.0/12,10.0.0.0/8,192.168.0.0/16"
       # Logging: canal 'daily' rotaciona automaticamente (14 dias)
       LOG_CHANNEL: "${LOG_CHANNEL:-daily}"
       LOG_LEVEL: "${LOG_LEVEL:-debug}"
@@ -86,7 +105,15 @@ services:
       redis:
         condition: service_started
     networks:
-      - agroverde
+      # Rede interna do stack (app <-> db/redis/mailpit).
+      agroverde:
+      # Rede externa compartilhada: é por ela que o wp-nginx alcança o app.
+      shared:
+        aliases:
+          - agroverde-vet-app
+    labels:
+      sablier.enable: "true"
+      sablier.group: "agroverde-vet"
     restart: unless-stopped
     # --- Limites de recursos ---
     deploy:
@@ -105,7 +132,7 @@ services:
   # ---------------------------------------------------------------------------
   db:
     image: mariadb:10.11
-    container_name: agroverde-db
+    container_name: agroverde-vet-db
     environment:
       MARIADB_DATABASE: "${DB_DATABASE:-vetessence}"
       MARIADB_USER: "${DB_USERNAME:-vetessence}"
@@ -114,8 +141,8 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./docker/mariadb/99-agroverde.cnf:/etc/mysql/conf.d/99-agroverde.cnf:ro
-    ports:
-      - "${DB_PORT_EXTERNAL:-3306}:3306"
+    # Sem porta no host: 3306 belongs ao stack do WordPress. O acesso ao banco
+    # é feito por dentro da rede: `docker compose exec db mariadb -u...`.
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -124,6 +151,9 @@ services:
       start_period: 30s
     networks:
       - agroverde
+    labels:
+      sablier.enable: "true"
+      sablier.group: "agroverde-vet"
     restart: unless-stopped
     # --- Limites de recursos ---
     deploy:
@@ -142,14 +172,25 @@ services:
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: agroverde-redis
+    container_name: agroverde-vet-redis
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    ports:
-      - "${REDIS_PORT_EXTERNAL:-6379}:6379"
+    # Sem porta no host: 6379 também é usado por wp-redis.
+    # Healthcheck existe para o Sablier: sem ele o Sablier não sabe quando o
+    # container está pronto e pode liberar a request antes do redis aceitar
+    # conexões (loga "container running without healthcheck").
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     networks:
       - agroverde
+    labels:
+      sablier.enable: "true"
+      sablier.group: "agroverde-vet"
     restart: unless-stopped
     # --- Limites de recursos ---
     deploy:
@@ -169,12 +210,14 @@ services:
   # ---------------------------------------------------------------------------
   mailpit:
     image: axllent/mailpit
-    container_name: agroverde-mailpit
-    ports:
-      - "${MAILPIT_UI_PORT:-8025}:8025"
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    container_name: agroverde-vet-mailpit
+    # Sem portas no host (8025/1025 já ocupados). UI acessível por dentro:
+    #   docker compose exec mailpit wget -qO- http://127.0.0.1:8025 > /dev/null
     networks:
       - agroverde
+    labels:
+      sablier.enable: "true"
+      sablier.group: "agroverde-vet"
     restart: unless-stopped
     # --- Limites de recursos ---
     deploy:
@@ -196,7 +239,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     image: agroverde/php:8.4
-    container_name: agroverde-queue
+    container_name: agroverde-vet-queue
     command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
     # Healthcheck desabilitado: a imagem base espera PHP-FPM, mas este
     # container roda apenas o worker de filas (sem webserver).
@@ -206,7 +249,9 @@ services:
       - .:/var/www/html
       - ./docker/php/99-agroverde.ini:/usr/local/etc/php/conf.d/99-agroverde.ini:ro
     environment:
-      APP_ENV: "${APP_ENV:-local}"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-https://vet.delsantoro.com.br}"
       LOG_CHANNEL: "${LOG_CHANNEL:-daily}"
       LOG_LEVEL: "${LOG_LEVEL:-debug}"
       DB_CONNECTION: "mysql"
@@ -226,7 +271,13 @@ services:
       redis:
         condition: service_started
     networks:
-      - agroverde
+      agroverde:
+      shared:
+        aliases:
+          - agroverde-vet-queue
+    labels:
+      sablier.enable: "true"
+      sablier.group: "agroverde-vet"
     restart: unless-stopped
     # --- Limites de recursos ---
     deploy:
@@ -245,5 +296,10 @@ volumes:
   redis_data:
 
 networks:
+  # Rede interna do stack — app fala com db/redis/mailpit por aqui.
   agroverde:
     driver: bridge
+  # Rede compartilhada da VPS (mesma do wp-nginx, sablier, middleware, penpot).
+  shared:
+    name: wordpress_wp-network
+    external: true

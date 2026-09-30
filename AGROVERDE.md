@@ -239,6 +239,9 @@ Configurações aplicadas (de `docs/performance.md`):
 | `mailpit` | 0.5 | 128 MB |
 | **Total** | **6.0** | **2.9 GB** |
 
+> Em produção o stack inteiro dorme após 2h sem acesso (Sablier), então esse
+> teto raramente é atingido — os 6.0 CPU só valem no pico de uso.
+
 ### Logging (3 camadas)
 
 | Camada | Onde | Config |
@@ -247,6 +250,9 @@ Configurações aplicadas (de `docs/performance.md`):
 | Compose | `docker-compose.yml` | json-file, 10m × 3, compress |
 | Logrotate | `/etc/logrotate.d/docker-containers.conf` | diário, size 50M, rotate 3 |
 
+Nenhum container do stack publica porta no host — o acesso vem pelo nginx
+compartilhado (`wp-nginx`) via DNS na rede `wordpress_wp-network`. Ver seção 10.
+
 Logs da aplicação: `LOG_CHANNEL=daily` (14 dias) + logrotate opcional
 (`sudo ./docker/logrotate/install.sh`).
 
@@ -254,10 +260,138 @@ Ver `docker/README.md` para detalhes completos.
 
 ---
 
-## 10. Referências
+## 10. Deploy em produção (VPS `vmi3319126`)
+
+App no ar em **https://vet.delsantoro.com.br** desde 2026-09-30.
+
+### Topologia
+
+```
+Internet → Cloudflare (laranja) → wp-nginx:443 → agroverde-vet-app:8080
+                                          (rede wordpress_wp-network)
+```
+
+Não existe porta publicada no host para nenhum container do stack. O único
+caminho de entrada é o vhost `vet.conf` dentro do nginx compartilhado.
+
+| Peça | Onde |
+|------|------|
+| Vhost | `~/wordpress/nginx/conf.d/vet.conf` (bind mount em `/etc/nginx/conf.d`) |
+| Certificado | `~/wordpress/ssl/vet/` (Let's Encrypt, DNS-01 via Cloudflare) |
+| DNS | registro A `vet` → `89.117.145.37`, proxied |
+| Sablier | container `sablier`, IP fixo `172.18.0.250` |
+
+### Containers
+
+Todos com `sablier.group=agroverde-vet`:
+
+| Container | Função | Redes |
+|---|---|---|
+| `agroverde-vet-app` | Laravel (nginx interno :8080) | `agroverde`, `shared` |
+| `agroverde-vet-queue` | `queue:work` | `agroverde`, `shared` |
+| `agroverde-vet-db` | MariaDB 10.11 | `agroverde` |
+| `agroverde-vet-redis` | cache/fila/sessão | `agroverde` |
+| `agroverde-vet-mailpit` | captura de e-mail | `agroverde` |
+
+### Regras de nome
+
+> **`agroverde-app` NÃO é nosso.** É o middleware de webhooks Bradial
+> (`~/projects/agroverde/middleware/docker-compose.vps.yml`). Ele está na mesma
+> rede `wordpress_wp-network` e é resolvido por `agroverde.conf` e
+> `agroverde-hook.conf`. Reutilizar esse nome quebra os dois.
+
+O prefixo do fork é `agroverde-vet-`.
+
+### Ciclo de vida (Sablier)
+
+1. Chega request em `vet.delsantoro.com.br`
+2. `auth_request /_sablier_vet` chama a estratégia *blocking* do Sablier
+3. Sablier acorda os 5 containers e segura a resposta até ficarem prontos
+4. Resposta servida; sessão renewada a cada request
+5. Após **2h sem request**, o Sablier derruba o grupo → consumo zero
+
+Medido: wake completo em **~11s** (MariaDB é o gargalo, `start_period: 30s`).
+
+Se o Sablier estiver fora do ar, o `error_page 500 502 503 504 = @fallback_direct`
+deixa a request passar direto — o site não cai junto.
+
+### Operação
+
+```bash
+cd ~/projects/vetessence
+
+docker compose ps                      # estado
+docker compose logs -f app             # logs
+docker compose exec app php artisan ...# comandos
+docker compose exec db mariadb -u vetessence -psecret vetessence
+
+curl -sI https://vet.delsantoro.com.br/login   # acorda a stack
+```
+
+Para acordar/dormir na mão:
+
+```bash
+docker stop agroverde-vet-app agroverde-vet-db agroverde-vet-redis \
+           agroverde-vet-queue agroverde-vet-mailpit
+curl -sI https://vet.delsantoro.com.br/login   # volta sozinha
+```
+
+### Gotchas descobertos no deploy
+
+**`proxy_pass` literal quebra com Sablier.** O IP do container muda a cada
+start. Com `proxy_pass http://agroverde-vet-app:8080;` o nginx resolve uma
+vez só, no boot, e passa a apontar para o container errado. Usar variável:
+
+```nginx
+resolver 127.0.0.11 valid=30s ipv6=off;
+set $upstream http://agroverde-vet-app:8080;
+proxy_pass $upstream;
+```
+
+**Container parado trava `nginx -t` em todo o VPS.** `agroverde-hook.conf`
+apontava para `agroverde-app` com `proxy_pass` literal; com o middleware
+parado, *qualquer* `nginx -s reload` falhava com `host not found in upstream`.
+Resolvido aplicando o mesmo padrão `resolver` + `$upstream` nesses dois
+arquivos. Backups: `agroverde.conf.bak-20260930-*`, `agroverde-hook.conf.bak-*`.
+
+**Laravel precisa confiar no proxy.** Sem isso ele responde com `http://` e o
+navegador entra em loop de redirect. Resolvido na camada A do fork —
+`app/Http/Middleware/AgroVerdeTrustProxies.php`, com bind no
+`AgroverdeServiceProvider`. O arquivo `TrustProxies.php` do core ficou intocado.
+
+**O certificado `mycert.pem` da VPS não é wildcard.** Cobre apenas
+`api.appcodrive.com`, `menkyou` e `social` — apesar de Many vhost apontarem
+para ele. Cada subdomínio novo precisa do próprio certificado.
+
+**`branch_id` é obrigatório em dados criados por CLI.** `Appointment`,
+`Invoice`, `MedicalRecord` e `ParasiteControl` usam o trait `BranchScoped`,
+que aplica global scope `where branch_id = <filial do usuário logado>`. Por
+CLI o `BranchContext` está vazio, o trait não preenche a coluna e tudo fica
+`NULL` — invisível para o dashboard. Ver `AgroVerdeDemoSeeder`.
+
+**`paid_at` é obrigatório para faturamento.** O card "Receita do Mês" soma por
+`whereMonth('paid_at')`. Fatura com `status = paid` e `paid_at` nulo não entra.
+
+### Contas de demonstração
+
+Definidas em `database/seeders/UserSeeder.php`:
+
+| Papel | E-mail | Senha |
+|---|---|---|
+| Super admin | `super@vet.com` | `super123` |
+| Admin | `admin@vet.com` | `admin123` |
+| Veterinário | `vet@vet.com` | `vet123` |
+| Recepcionista | `recep@vet.com` | `recep123` |
+
+Dados de volume realista: `php artisan db:seed --class=AgroVerdeDemoSeeder --force`
+
+---
+
+## 11. Referências
 
 - `PLAN.md` — Build plan do upstream (não editar)
 - `AGENTS.md` — Convenções do upstream (não editar)
 - `docs/performance.md` — Guia de otimização (upstream)
 - `docker/README.md` — Ambiente Docker
 - `docs/plans/0009-estrategia-fork-upstream.md` — Estratégia detalhada (no repo agroverde)
+- `~/projects/agroverde/docs/deploy-vps.md` — deploy do middleware webhook
