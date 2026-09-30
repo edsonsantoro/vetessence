@@ -1,0 +1,8 @@
+# Pasta de overlay de views do AgroVerde.
+#
+# Views aqui sobrescrevem as do core (resources/views/) sem tocar nos
+# arquivos originais. Ver AGROVERDE.md.
+#
+# Exemplo:
+#   resources/views/agroverde/pets/show.blade.php
+#   → sobrescreve resources/views/pets/show.blade.php

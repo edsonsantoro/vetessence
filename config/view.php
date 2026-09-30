@@ -14,6 +14,9 @@ return [
     */
 
     'paths' => [
+        // AgroVerde: overlay de views — custom primeiro, core como fallback.
+        // Ver AGROVERDE.md (estratégia de fork em 3 camadas).
+        resource_path('views/agroverde'),
         resource_path('views'),
     ],
 

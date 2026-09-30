@@ -188,6 +188,9 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\ObserverServiceProvider::class,
 
+        // === AGROVERDE (fork) — manter sempre por último ===
+        App\Providers\AgroverdeServiceProvider::class,
+
     ],
 
     /*
