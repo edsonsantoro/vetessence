@@ -58,7 +58,8 @@ set_env() {
 }
 
 set_env "APP_NAME" "AgroVerde"
-set_env "APP_URL" "http://localhost:8000"
+set_env "APP_PORT" "8080"
+set_env "APP_URL" "http://localhost:8080"
 set_env "DB_CONNECTION" "mysql"
 set_env "DB_HOST" "db"
 set_env "DB_PORT" "3306"
@@ -74,18 +75,28 @@ set_env "MAIL_MAILER" "smtp"
 set_env "MAIL_HOST" "mailpit"
 set_env "MAIL_PORT" "1025"
 
+# Pusher (evita warnings de interpolação do docker-compose)
+set_env "PUSHER_HOST" "127.0.0.1"
+set_env "PUSHER_PORT" "6001"
+set_env "PUSHER_SCHEME" "http"
+
 # Branding AgroVerde
 set_env "AGROVERDE_NAME" "AgroVerde"
 set_env "AGROVERDE_PRIMARY_COLOR" "#2E7D32"
 
 ok ".env ajustado"
 
-# --- 4. Subir containers ---
+# --- 4. Build da imagem ---
+info "Construindo imagem PHP customizada (extensões gd, bcmath, intl, exif)..."
+docker compose build app
+ok "Imagem construída"
+
+# --- 5. Subir containers ---
 info "Subindo containers (app, db, redis, mailpit, queue)..."
 docker compose up -d
 ok "Containers iniciados"
 
-# --- 5. Aguardar o banco ---
+# --- 6. Aguardar o banco ---
 info "Aguardando o banco de dados ficar pronto..."
 for i in $(seq 1 30); do
     if docker compose exec -T db healthcheck.sh --connect --innodb_initialized &>/dev/null; then
@@ -99,24 +110,30 @@ for i in $(seq 1 30); do
     sleep 2
 done
 
-# --- 6. Composer install ---
+# --- 7. Composer install (como root: www-data não pode criar vendor/) ---
 info "Instalando dependências (composer install)..."
-docker compose exec -T app composer install --no-interaction --prefer-dist
+docker compose run --rm --no-deps -u root app composer install --no-interaction --prefer-dist
 ok "Dependências instaladas"
 
-# --- 7. Key generate ---
+# --- 8. Ajustar permissões ---
+info "Ajustando permissões..."
+docker compose run --rm --no-deps -u root app chown -R www-data:www-data \
+    /var/www/html/vendor /var/www/html/bootstrap/cache /var/www/html/storage
+ok "Permissões ajustadas"
+
+# --- 9. Key generate ---
 info "Gerando APP_KEY..."
-docker compose exec -T app php artisan key:generate --force
+docker compose run --rm --no-deps -u root app php artisan key:generate --force
 ok "APP_KEY gerada"
 
-# --- 8. Migrations + seeders ---
+# --- 10. Migrations + seeders ---
 info "Rodando migrations e seeders..."
-docker compose exec -T app php artisan migrate --seed --force
+docker compose run --rm --no-deps -u root app php artisan migrate --seed --force
 ok "Banco populado"
 
-# --- 9. Storage link ---
+# --- 11. Storage link ---
 info "Criando storage link..."
-docker compose exec -T app php artisan storage:link 2>/dev/null || warn "storage:link já existe"
+docker compose run --rm --no-deps -u root app php artisan storage:link 2>/dev/null || warn "storage:link já existe"
 ok "Storage link pronto"
 
 # --- Fim ---
@@ -125,7 +142,7 @@ echo "=========================================="
 echo -e "  ${GREEN}Setup concluído!${NC}"
 echo "=========================================="
 echo ""
-echo "  App:      http://localhost:8000"
+echo "  App:      http://localhost:8080"
 echo "  Mailpit:  http://localhost:8025"
 echo ""
 echo "  Login (demo):"

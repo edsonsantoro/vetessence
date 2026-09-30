@@ -137,6 +137,10 @@ services:
     image: agroverde/php:8.4
     container_name: agroverde-queue
     command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    # Healthcheck desabilitado: a imagem base espera PHP-FPM, mas este
+    # container roda apenas o worker de filas (sem webserver).
+    healthcheck:
+      disable: true
     volumes:
       - .:/var/www/html
       - ./docker/php/99-agroverde.ini:/usr/local/etc/php/conf.d/99-agroverde.ini:ro

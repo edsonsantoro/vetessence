@@ -6,11 +6,13 @@ Ambiente Docker para desenvolvimento do fork AgroVerde do VetEssence.
 
 | Serviço | Imagem | Porta | Papel |
 |---------|--------|-------|-------|
-| `app` | `serversideup/php:8.4-fpm-nginx` | 8000 | PHP 8.4 FPM + Nginx |
+| `app` | `agroverde/php:8.4` (build local) | **8080** | PHP 8.4 FPM + Nginx |
 | `db` | `mariadb:10.11` | 3306 | Banco de dados |
 | `redis` | `redis:7-alpine` | 6379 | Cache, queue, session |
 | `mailpit` | `axllent/mailpit` | 8025 (UI), 1025 (SMTP) | Captura de e-mails |
-| `queue` | `serversideup/php:8.4-fpm-nginx` | — | Worker de filas |
+| `queue` | `agroverde/php:8.4` | — | Worker de filas |
+
+> **Nota:** a porta padrão é **8080** (a 8000 pode estar ocupada por outro serviço). Ajuste via `APP_PORT` no `.env`.
 
 ## Por Que `serversideup/php`
 
@@ -19,6 +21,24 @@ Ambiente Docker para desenvolvimento do fork AgroVerde do VetEssence.
 - ✅ Suporte nativo a Laravel (autorun de migrations, storage link)
 - ✅ Variáveis de ambiente para configurar PHP (OPcache, memory_limit)
 - ✅ Multi-arquitetura (amd64, arm64)
+
+## Imagem Customizada
+
+A imagem base **não inclui** todas as extensões que o VetEssence requer. O
+`docker/php/Dockerfile` estende a base e instala:
+
+| Extensão | Usada por |
+|----------|-----------|
+| `gd` | simple-qrcode, intervention/image |
+| `bcmath` | cálculos financeiros |
+| `intl` | formatação i18n |
+| `exif` | metadados de imagens |
+
+O build é feito automaticamente pelo `setup.sh` ou manualmente:
+
+```bash
+docker compose build app
+```
 
 ## Setup Rápido
 
@@ -136,6 +156,52 @@ DB_ROOT_PASSWORD=root
 APP_PORT=8080
 docker compose up -d
 ```
+
+### Container `app` em loop de restart
+
+**Sintoma:** `Restarting (1)` e log `Could not detect Laravel installation`.
+
+**Causa:** o `vendor/` não existe (composer install não rodou).
+
+**Solução:**
+
+```bash
+docker compose stop app queue
+docker compose run --rm --no-deps -u root app composer install
+docker compose run --rm --no-deps -u root app chown -R www-data:www-data vendor bootstrap/cache storage
+docker compose up -d
+```
+
+### `composer install` falha: "vendor does not exist and could not be created"
+
+**Causa:** o container roda como `www-data` (uid 33) e não pode criar `vendor/`.
+
+**Solução:** rodar como root e depois ajustar permissões:
+
+```bash
+docker compose run --rm --no-deps -u root app composer install
+docker compose run --rm --no-deps -u root app chown -R www-data:www-data vendor bootstrap/cache storage
+```
+
+### Warnings de PUSHER no docker compose
+
+**Sintoma:** `The "PUSHER_HOST" variable is not set`.
+
+**Causa:** o `.env` do projeto tem `VITE_PUSHER_HOST="${PUSHER_HOST}"` e o Docker Compose tenta interpolar.
+
+**Solução:** adicionar ao `.env`:
+
+```env
+PUSHER_HOST=127.0.0.1
+PUSHER_PORT=6001
+PUSHER_SCHEME=http
+```
+
+### Container `queue` unhealthy
+
+**Causa:** o healthcheck da imagem base espera PHP-FPM, mas o container roda apenas o worker.
+
+**Solução:** já corrigido no `docker-compose.yml` (`healthcheck: disable: true`).
 
 ### Banco não sobe
 
