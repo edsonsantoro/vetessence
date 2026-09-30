@@ -267,12 +267,42 @@ App no ar em **https://vet.delsantoro.com.br** desde 2026-09-30.
 ### Topologia
 
 ```
-Internet → Cloudflare (laranja) → wp-nginx:443 → agroverde-vet-app:8080
-                                          (rede wordpress_wp-network)
+Internet → Cloudflare (laranja) → wp-nginx:443
+                                    ├─ auth_basic  ── 401 sem credencial (0,1s)
+                                    └─ auth_request ── Sablier acorda a stack
+                                                         └─ agroverde-vet-app:8080
 ```
 
 Não existe porta publicada no host para nenhum container do stack. O único
 caminho de entrada é o vhost `vet.conf` dentro do nginx compartilhado.
+
+### Controle de acesso
+
+Duas camadas, nesta ordem:
+
+1. **HTTP Basic** — `~/wordpress/nginx/conf.d/vet.htpasswd`
+2. **Sablier** — só acorda a stack depois que a senha passou
+
+A ordem importa: `auth_basic` roda na fase ACCESS antes do `auth_request`,
+então um scanner da internet sem a credencial leva 401 **antes** de o Sablier
+ser chamado — não desperta nada e não gasta CPU da VPS. Medido: 401 em 0,1s
+com o stack inteiro parado; com credencial, 10,9s até o 200.
+
+O 401 não entra no `error_page 500 502 503 504`, então a senha continua valendo
+mesmo com o Sablier fora do ar — e o `@fallback_direct` repete o `auth_basic`
+de propósito, senão viraria porta aberta.
+
+Trocar a credencial:
+
+```bash
+htpasswd -c ~/wordpress/nginx/conf.d/vet.htpasswd <usuario>
+docker exec wp-nginx nginx -s reload
+```
+
+> O arquivo precisa ser `644`. Com `640` o worker do nginx leva
+> `open() ... failed (13: Permission denied)` e **tudo** vira 500 — inclusive
+> o caminho sem senha, que deixa de parecer 401. Mesmo modo do
+> `agroverde.htpasswd` existente.
 
 | Peça | Onde |
 |------|------|
@@ -304,13 +334,18 @@ O prefixo do fork é `agroverde-vet-`.
 
 ### Ciclo de vida (Sablier)
 
-1. Chega request em `vet.delsantoro.com.br`
-2. `auth_request /_sablier_vet` chama a estratégia *blocking* do Sablier
-3. Sablier acorda os 5 containers e segura a resposta até ficarem prontos
-4. Resposta servida; sessão renewada a cada request
-5. Após **2h sem request**, o Sablier derruba o grupo → consumo zero
+1. Request chega em `vet.delsantoro.com.br`
+2. Basic auth valida a credencial (401 se não tiver)
+3. `auth_request /_sablier_vet` chama a estratégia *blocking* do Sablier
+4. Sablier acorda os 5 containers e segura a resposta até ficarem prontos
+5. Resposta servida; sessão renewada a cada request
+6. Após **2h sem request**, o Sablier derruba o grupo → consumo zero
 
 Medido: wake completo em **~11s** (MariaDB é o gargalo, `start_period: 30s`).
+
+> Verificado: o caminho de *wake* foi testado ponta a ponta. O *sleep* após 2h
+> segue a configuração (`session_duration=2h`) mas ainda não foi observado
+> completar um ciclo inteiro.
 
 Se o Sablier estiver fora do ar, o `error_page 500 502 503 504 = @fallback_direct`
 deixa a request passar direto — o site não cai junto.
@@ -374,9 +409,10 @@ CLI o `BranchContext` está vazio, o trait não preenche a coluna e tudo fica
 
 ### Contas de demonstração
 
-Definidas em `database/seeders/UserSeeder.php`:
+Definidas em `database/seeders/UserSeeder.php`. As senhas padrão já foram
+trocadas na VPS — os valores abaixo são só o que está no código:
 
-| Papel | E-mail | Senha |
+| Papel | E-mail | Senha no código |
 |---|---|---|
 | Super admin | `super@vet.com` | `super123` |
 | Admin | `admin@vet.com` | `admin123` |
@@ -384,6 +420,25 @@ Definidas em `database/seeders/UserSeeder.php`:
 | Recepcionista | `recep@vet.com` | `recep123` |
 
 Dados de volume realista: `php artisan db:seed --class=AgroVerdeDemoSeeder --force`
+
+### Migração do SimplesVet (ERP)
+
+Os dados extraídos em `~/projects/agroverde/svapi/` vêm do **SimplesVet**
+(`api.simples.vet/app/v3/...`) — é o ERP da clínica. Não confundir com o
+**Bradial**, que é o sistema de atendimento por WhatsApp e conversa com o
+middleware de webhook (`~/projects/agroverde/middleware`).
+
+Estado atual da extração:
+
+| Recurso | Situação |
+|---|---|
+| Clientes/tutores | ✅ 9.928 (9.380 com CPF, 9.912 com telefone, 0 faltantes) |
+| Espécies / raças / vacinas (catálogo) | ✅ extraído |
+| Pets | ❌ não extraído |
+| Agenda / histórico / financeiro | ❌ não extraído |
+
+Sem pets, a recepção não consegue cadastrar atendimento — é o gargalo para
+avançar na migração.
 
 ---
 
