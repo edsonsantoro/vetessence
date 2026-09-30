@@ -176,8 +176,66 @@ AGROVERDE_MODULE_ATTENDANCE_WIZARD=true
 
 ---
 
-## 9. Referências
+## 9. Ambiente de Desenvolvimento (Docker)
+
+Ambiente Docker pronto para desenvolvimento, com configurações de performance
+baseadas em `docs/performance.md`.
+
+### Stack
+
+| Serviço | Imagem | Porta | Papel |
+|---------|--------|-------|-------|
+| `app` | `agroverde/php:8.4` (build local) | **8080** | PHP 8.4 FPM + Nginx |
+| `db` | `mariadb:10.11` | 3306 | Banco de dados |
+| `redis` | `redis:7-alpine` | 6379 | Cache, queue, session |
+| `mailpit` | `axllent/mailpit` | 8025 (UI), 1025 (SMTP) | Captura de e-mails |
+| `queue` | `agroverde/php:8.4` | — | Worker de filas |
+
+> **Nota:** a porta padrão é **8080** (a 8000 está ocupada por outro serviço nesta máquina).
+
+### Setup
+
+```bash
+./docker/setup.sh
+```
+
+### Comandos
+
+```bash
+docker compose up -d              # subir
+docker compose down               # parar
+docker compose logs -f app        # logs
+docker compose exec app bash      # shell
+docker compose exec app php artisan test
+```
+
+### Imagem customizada
+
+`docker/php/Dockerfile` estende `serversideup/php:8.4-fpm-nginx` com as
+extensões que o VetEssence requer e que não vêm na base:
+
+- `gd` (simple-qrcode, intervention/image)
+- `bcmath` (cálculos financeiros)
+- `intl` (formatação i18n)
+- `exif` (metadados de imagens)
+
+### Performance
+
+Configurações aplicadas (de `docs/performance.md`):
+
+| Arquivo | Config |
+|---------|--------|
+| `docker/php/99-agroverde.ini` | OPcache 256M, memory_limit 256M, uploads 64M |
+| `docker/mariadb/99-agroverde.cnf` | innodb_buffer_pool_size 512M, slow query log |
+
+Ver `docker/README.md` para detalhes completos.
+
+---
+
+## 10. Referências
 
 - `PLAN.md` — Build plan do upstream (não editar)
 - `AGENTS.md` — Convenções do upstream (não editar)
+- `docs/performance.md` — Guia de otimização (upstream)
+- `docker/README.md` — Ambiente Docker
 - `docs/plans/0009-estrategia-fork-upstream.md` — Estratégia detalhada (no repo agroverde)

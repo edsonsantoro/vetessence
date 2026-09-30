@@ -1,0 +1,171 @@
+# AgroVerde — Ambiente de Desenvolvimento (Docker)
+#
+# Imagem: serversideup/php:8.4-fpm-nginx (Nginx embutido, otimizada para Laravel)
+# Configurações de performance baseadas em docs/performance.md
+#
+# Uso:
+#   docker compose up -d          # subir
+#   docker compose logs -f app    # logs
+#   docker compose exec app bash  # shell
+#   docker compose down           # parar
+#
+# Ver docker/README.md para detalhes.
+
+services:
+  # ---------------------------------------------------------------------------
+  # Aplicação (PHP 8.4 FPM + Nginx)
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: agroverde/php:8.4
+    container_name: agroverde-app
+    ports:
+      - "${APP_PORT:-8000}:8080"
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/99-agroverde.ini:/usr/local/etc/php/conf.d/99-agroverde.ini:ro
+    environment:
+      # --- Laravel ---
+      APP_ENV: "${APP_ENV:-local}"
+      APP_DEBUG: "${APP_DEBUG:-true}"
+      # --- Autorun (migrations, storage link) ---
+      # Desabilitado por padrão: o vendor/ precisa existir primeiro.
+      # O setup.sh roda composer install e depois habilita.
+      AUTORUN_ENABLED: "${AUTORUN_ENABLED:-false}"
+      AUTORUN_LARAVEL_MIGRATION: "true"
+      AUTORUN_LARAVEL_MIGRATION_ISOLATION: "true"
+      AUTORUN_LARAVEL_STORAGE_LINK: "true"
+      AUTORUN_LARAVEL_CONFIG_CACHE: "false"
+      AUTORUN_LARAVEL_ROUTE_CACHE: "false"
+      AUTORUN_LARAVEL_VIEW_CACHE: "false"
+      # --- Performance (docs/performance.md) ---
+      PHP_OPCACHE_ENABLE: "1"
+      PHP_MEMORY_LIMIT: "256M"
+      PHP_MAX_EXECUTION_TIME: "300"
+      PHP_POST_MAX_SIZE: "64M"
+      PHP_UPLOAD_MAX_FILE_SIZE: "64M"
+      # --- Banco ---
+      DB_CONNECTION: "mysql"
+      DB_HOST: "db"
+      DB_PORT: "3306"
+      DB_DATABASE: "${DB_DATABASE:-vetessence}"
+      DB_USERNAME: "${DB_USERNAME:-vetessence}"
+      DB_PASSWORD: "${DB_PASSWORD:-secret}"
+      # --- Cache / Queue / Session ---
+      CACHE_DRIVER: "redis"
+      QUEUE_CONNECTION: "redis"
+      SESSION_DRIVER: "redis"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      # --- Mail ---
+      MAIL_MAILER: "smtp"
+      MAIL_HOST: "mailpit"
+      MAIL_PORT: "1025"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - agroverde
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Banco de Dados (MariaDB 10.11 — mesma versão do docs/performance.md)
+  # ---------------------------------------------------------------------------
+  db:
+    image: mariadb:10.11
+    container_name: agroverde-db
+    environment:
+      MARIADB_DATABASE: "${DB_DATABASE:-vetessence}"
+      MARIADB_USER: "${DB_USERNAME:-vetessence}"
+      MARIADB_PASSWORD: "${DB_PASSWORD:-secret}"
+      MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-root}"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mariadb/99-agroverde.cnf:/etc/mysql/conf.d/99-agroverde.cnf:ro
+    ports:
+      - "${DB_PORT_EXTERNAL:-3306}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - agroverde
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis (cache, queue, session)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: agroverde-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT_EXTERNAL:-6379}:6379"
+    networks:
+      - agroverde
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Mailpit (captura de e-mails em desenvolvimento)
+  # UI: http://localhost:8025
+  # ---------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit
+    container_name: agroverde-mailpit
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    networks:
+      - agroverde
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Queue Worker (processa jobs em background)
+  # ---------------------------------------------------------------------------
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: agroverde/php:8.4
+    container_name: agroverde-queue
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/99-agroverde.ini:/usr/local/etc/php/conf.d/99-agroverde.ini:ro
+    environment:
+      APP_ENV: "${APP_ENV:-local}"
+      DB_CONNECTION: "mysql"
+      DB_HOST: "db"
+      DB_DATABASE: "${DB_DATABASE:-vetessence}"
+      DB_USERNAME: "${DB_USERNAME:-vetessence}"
+      DB_PASSWORD: "${DB_PASSWORD:-secret}"
+      CACHE_DRIVER: "redis"
+      QUEUE_CONNECTION: "redis"
+      SESSION_DRIVER: "redis"
+      REDIS_HOST: "redis"
+      PHP_OPCACHE_ENABLE: "1"
+      PHP_MEMORY_LIMIT: "256M"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - agroverde
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  agroverde:
+    driver: bridge
