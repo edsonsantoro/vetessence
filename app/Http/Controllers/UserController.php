@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Support\AgroVerde;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class UserController extends Controller
             $query->where('role_id', $request->role_id);
         }
 
-        $users = $query->orderBy('name')->get();
+        $users = AgroVerde::paginar($query->orderBy('name'));
 
         $roles = Role::orderBy('name')->get();
 

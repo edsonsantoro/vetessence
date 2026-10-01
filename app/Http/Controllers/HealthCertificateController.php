@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HealthCertificate;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use App\Models\Role;
@@ -29,7 +30,7 @@ class HealthCertificateController extends Controller
             });
         }
 
-        $certificates = $query->orderBy('issue_date', 'desc')->get();
+        $certificates = AgroVerde::paginar($query->orderBy('issue_date', 'desc'));
         $pets = Pet::where('is_active', true)->orderBy('name')->get();
 
         return view('health-certificates.index', compact('certificates', 'pets'));

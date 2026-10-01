@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LaboratoryOrder;
+use App\Support\AgroVerde;
 use App\Models\LaboratoryTest;
 use App\Models\Pet;
 use App\Models\User;
@@ -34,7 +35,7 @@ class LaboratoryOrderController extends Controller
             $query->where('order_number', 'like', "%{$request->search}%");
         }
 
-        $orders = $query->orderBy('order_date', 'desc')->get();
+        $orders = AgroVerde::paginar($query->orderBy('order_date', 'desc'));
 
         return view('laboratory-orders.index', compact('orders'));
     }

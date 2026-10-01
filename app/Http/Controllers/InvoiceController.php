@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Support\AgroVerde;
 use App\Models\InvoiceItem;
 use App\Models\Tutor;
 use App\Models\Service;
@@ -46,9 +47,9 @@ class InvoiceController extends Controller
             $query->whereDate('due_date', '<=', $request->date_to);
         }
 
-        $invoices = $query->orderByRaw("FIELD(status, 'pending', 'overdue', 'cancelled', 'paid')")
+        $invoices = AgroVerde::paginar($query->orderByRaw("FIELD(status, 'pending', 'overdue', 'cancelled', 'paid')")
             ->orderBy('invoice_number', 'desc')
-            ->get();
+            );
 
         $hasNfseConfig = NfseConfig::where('is_active', true)->exists();
         $hasNfeConfig = NfeConfig::where('is_active', true)->exists();

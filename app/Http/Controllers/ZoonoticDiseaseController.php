@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ZoonoticDisease;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -30,7 +31,7 @@ class ZoonoticDiseaseController extends Controller
             $query->where('is_notifiable', $request->boolean('is_notifiable'));
         }
 
-        $diseases = $query->orderBy('name')->get();
+        $diseases = AgroVerde::paginar($query->orderBy('name'));
 
         if ($request->ajax()) {
             return response()->json($diseases);

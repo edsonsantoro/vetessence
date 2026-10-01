@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ConvenioClaim;
+use App\Support\AgroVerde;
 use App\Models\ConvenioPet;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class ConvenioClaimController extends Controller
     {
         $query = ConvenioClaim::with(['convenioPet.convenio', 'convenioPet.pet', 'invoice']);
         if ($request->status) $query->where('status', $request->status);
-        $claims = $query->latest()->get();
+        $claims = AgroVerde::paginar($query->latest());
         return view('convenio-claims.index', compact('claims'));
     }
 

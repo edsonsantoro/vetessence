@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Support\AgroVerde;
 use App\Models\Category;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class ProductController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        $products = $query->orderBy('name')->get();
+        $products = AgroVerde::paginar($query->orderBy('name'));
 
         $categories = Category::where('type', 'product')->orderBy('name')->get();
 

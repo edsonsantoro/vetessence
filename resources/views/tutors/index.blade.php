@@ -1,8 +1,6 @@
 @extends('layouts.adminlte', ['title' => 'Tutores'])
 
 @section('content')
-{{-- AgroVerde: data-server-paginated desliga o DataTables desta tabela.
-     A lista tem ~10 mil tutores vindos do SimplesVet. Ver AGROVERDE.md §11. --}}
 <div class="card" data-server-paginated>
     <div class="card-header">
         <h3 class="card-title">Tutores</h3>
@@ -65,19 +63,10 @@
         @else
         <p class="text-center text-muted">Nenhum registro encontrado.</p>
         @endif
-
-        <!-- AgroVerde: paginação. São ~10 mil tutores vindos do SimplesVet.
-             Ver AGROVERDE.md §11. -->
-        @if(isset($tutors) && $tutors->hasPages())
-        <div class="card-footer d-flex align-items-center justify-content-between">
-            <small class="text-muted">
-                Mostrando {{ $tutors->firstItem() }}–{{ $tutors->lastItem() }} de {{ $tutors->total() }}
-            </small>
-            {{ $tutors->onEachSide(1)->links() }}
-        </div>
-        @endif
     </div>
 </div>
+
+{{-- O rodapé de paginação é desenhado pelo layout. Ver AGROVERDE.md §11. --}}
 
 @endsection
 

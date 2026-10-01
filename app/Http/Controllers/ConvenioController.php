@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Convenio;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class ConvenioController extends Controller
@@ -24,7 +25,7 @@ class ConvenioController extends Controller
             $query->where('is_active', $request->is_active);
         }
 
-        $convenios = $query->orderBy('name')->get();
+        $convenios = AgroVerde::paginar($query->orderBy('name'));
 
         return view('convenios.index', compact('convenios'));
     }

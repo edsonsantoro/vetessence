@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Boarding;
+use App\Support\AgroVerde;
 use App\Models\BoardingDailyTask;
 use App\Models\BoardingKennel;
 use App\Models\Invoice;
@@ -33,7 +34,7 @@ class BoardingController extends Controller
             $query->where('type', $request->type);
         }
 
-        $boardings = $query->orderBy('check_in_at', 'desc')->get();
+        $boardings = AgroVerde::paginar($query->orderBy('check_in_at', 'desc'));
 
         return view('boardings.index', compact('boardings'));
     }

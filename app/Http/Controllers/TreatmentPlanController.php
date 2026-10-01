@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TreatmentPlan;
+use App\Support\AgroVerde;
 use App\Models\TreatmentPlanItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class TreatmentPlanController extends Controller
             $query->where('pet_id', $request->pet_id);
         }
 
-        $plans = $query->orderBy('created_at', 'desc')->get();
+        $plans = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
 
         return view('treatment-plans.index', compact('plans'));
     }

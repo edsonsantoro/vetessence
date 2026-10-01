@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CommunicationQueue;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class CommunicationQueueController extends Controller
@@ -40,7 +41,7 @@ class CommunicationQueueController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $queues = $query->orderBy('created_at', 'desc')->get();
+        $queues = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
 
         return view('communication-queues.index', compact('queues'));
     }

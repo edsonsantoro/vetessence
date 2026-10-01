@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Teleconsultation;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class TeleconsultationController extends Controller
             $query->whereHas('pet', fn($q) => $q->where('name', 'like', "%{$request->search}%"));
         }
 
-        $teleconsultations = $query->orderBy('scheduled_at', 'desc')->get();
+        $teleconsultations = AgroVerde::paginar($query->orderBy('scheduled_at', 'desc'));
 
         return view('teleconsultations.index', compact('teleconsultations'));
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PreAnestheticEvaluation;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,7 @@ class PreAnestheticEvaluationController extends Controller
         $query = PreAnestheticEvaluation::with(['pet', 'vet']);
         if ($request->pet_id) $query->where('pet_id', $request->pet_id);
         if ($request->status) $query->where('status', $request->status);
-        $evaluations = $query->latest()->get();
+        $evaluations = AgroVerde::paginar($query->latest());
         return view('pre-anesthetic-evaluations.index', compact('evaluations'));
     }
 

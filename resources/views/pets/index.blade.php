@@ -1,9 +1,6 @@
 @extends('layouts.adminlte', ['title' => 'Pets'])
 
 @section('content')
-{{-- AgroVerde: data-server-paginated desliga o DataTables desta tabela.
-     A lista tem ~16 mil pets vindos do SimplesVet; sem isso o PHP estoura
-     a memória. Ver AGROVERDE.md §11. --}}
 <div class="card" data-server-paginated>
     <div class="card-header">
         <h3 class="card-title">Pets</h3>
@@ -81,16 +78,8 @@
     </div>
 </div>
 
-<!-- AgroVerde: paginação. A lista não cabe em uma tela com ~16 mil pets
-     vindos do SimplesVet. Ver AGROVERDE.md §11. -->
-@if($pets->hasPages())
-<div class="card-footer d-flex align-items-center justify-content-between">
-    <small class="text-muted">
-        Mostrando {{ $pets->firstItem() }}–{{ $pets->lastItem() }} de {{ $pets->total() }}
-    </small>
-    {{ $pets->onEachSide(1)->links() }}
-</div>
-@endif
+<!-- O rodapé de paginação é desenhado pelo layout (layouts.adminlte),
+     que injeta todo paginator que a view receber. Ver AGROVERDE.md §11. -->
 
 <!-- Pet Modal -->
 <div class="modal fade" id="petModal" tabindex="-1" role="dialog" aria-hidden="true">

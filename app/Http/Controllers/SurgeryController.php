@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Surgery;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use App\Models\Role;
@@ -27,7 +28,7 @@ class SurgeryController extends Controller
             $query->where('status', $request->status);
         }
 
-        $surgeries = $query->orderBy('scheduled_date', 'desc')->get();
+        $surgeries = AgroVerde::paginar($query->orderBy('scheduled_date', 'desc'));
 
         $pets = Pet::where('is_active', true)->orderBy('name')->get();
 

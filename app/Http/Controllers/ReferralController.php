@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pet;
+use App\Support\AgroVerde;
 use App\Models\Referral;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class ReferralController extends Controller
             $query->where('referral_number', 'like', "%{$request->search}%");
         }
 
-        $referrals = $query->orderBy('created_at', 'desc')->get();
+        $referrals = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
 
         return view('referrals.index', compact('referrals'));
     }

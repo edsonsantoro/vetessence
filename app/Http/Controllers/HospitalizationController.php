@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Hospitalization;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class HospitalizationController extends Controller
             $query->whereDate('admission_date', '<=', $request->date_to);
         }
 
-        $hospitalizations = $query->orderBy('admission_date', 'desc')->get();
+        $hospitalizations = AgroVerde::paginar($query->orderBy('admission_date', 'desc'));
 
         return view('hospitalizations.index', compact('hospitalizations'));
     }

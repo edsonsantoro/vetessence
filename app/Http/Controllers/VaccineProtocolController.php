@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\VaccineProtocol;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class VaccineProtocolController extends Controller
@@ -23,7 +24,7 @@ class VaccineProtocolController extends Controller
             $query->where('is_core', $request->is_core);
         }
 
-        $protocols = $query->orderBy('species')->orderBy('age_start_weeks')->get();
+        $protocols = AgroVerde::paginar($query->orderBy('species')->orderBy('age_start_weeks'));
 
         return view('vaccine-protocols.index', compact('protocols'));
     }

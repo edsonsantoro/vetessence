@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NfeInvoice;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class NfceController extends Controller
@@ -28,7 +29,7 @@ class NfceController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $nfceInvoices = $query->latest()->get();
+        $nfceInvoices = AgroVerde::paginar($query->latest());
 
         return view('nfce.index', compact('nfceInvoices'));
     }

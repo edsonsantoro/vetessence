@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -21,7 +22,7 @@ class SupplierController extends Controller
                   ->orWhere('cnpj', 'like', "%{$request->search}%");
         }
 
-        $suppliers = $query->orderBy('name')->get();
+        $suppliers = AgroVerde::paginar($query->orderBy('name'));
 
         return view('suppliers.index', compact('suppliers'));
     }

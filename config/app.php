@@ -79,7 +79,10 @@ return [
     |
     */
 
-    'timezone' => 'America/Sao_Paulo',
+    // AgroVerde: hora de Manaus. A clínica fica em Sinop-MT (UTC-4) e o
+    // ERP (SimplesVet) também opera nesse fuso. Fixar São Paulo deslocaria
+    // agendamentos eimestamps em uma hora. Ver docker/php/99-agroverde.ini.
+    'timezone' => env('APP_TIMEZONE', 'America/Manaus'),
 
     /*
     |--------------------------------------------------------------------------

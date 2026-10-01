@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Middleware\AgroVerdeTrustProxies;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -81,6 +82,31 @@ class AgroverdeServiceProvider extends ServiceProvider
     {
         Paginator::defaultView('pagination::bootstrap-4');
         Paginator::defaultSimpleView('pagination::bootstrap-4');
+
+        // A paginação é desenhada no layout, não em cada view: são 59
+        // listagens e nenhuma delas deve ganhar um rodapé à mão. O composer
+        // varre os dados que a view recebeu e entrega ao layout tudo que é
+        // Paginator.
+        View::composer('layouts.adminlte', function ($view) {
+            $paginas = [];
+
+            foreach ($view->getData() as $chave => $valor) {
+                // Chave com "__" é interna do Blade (`__currentLoopData`,
+                // `__env`, `__data`...). `__currentLoopData` sobrevive de um
+                // `@foreach` da view filha e, no caso de uma lista, chega ao
+                // layout ainda apontando para o paginator — o que desenhava o
+                // rodapé duas vezes.
+                if (str_starts_with($chave, '__')) {
+                    continue;
+                }
+
+                if ($valor instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator) {
+                    $paginas[] = $valor;
+                }
+            }
+
+            $view->with('__paginas', $paginas);
+        });
     }
 
     /**

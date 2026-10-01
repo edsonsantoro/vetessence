@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\OnlineBooking;
+use App\Support\AgroVerde;
 use App\Models\Appointment;
 use App\Models\Pet;
 use App\Models\Tutor;
@@ -30,7 +31,7 @@ class OnlineBookingController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->get();
+        $bookings = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
 
         return view('online-bookings.index', compact('bookings'));
     }

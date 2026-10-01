@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ConsentTemplate;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -29,7 +30,7 @@ class ConsentTemplateController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $templates = $query->orderBy('name')->get();
+        $templates = AgroVerde::paginar($query->orderBy('name'));
 
         return view('consent-templates.index', compact('templates'));
     }

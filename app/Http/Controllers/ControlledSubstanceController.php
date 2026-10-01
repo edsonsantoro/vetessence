@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ControlledSubstance;
+use App\Support\AgroVerde;
 use App\Models\ControlledSubstanceLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class ControlledSubstanceController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $substances = $query->orderBy('name')->get();
+        $substances = AgroVerde::paginar($query->orderBy('name'));
 
         return view('controlled-substances.index', compact('substances'));
     }

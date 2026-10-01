@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DietPlan;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,7 @@ class DietPlanController extends Controller
         $query = DietPlan::with(['pet', 'createdBy']);
         if ($request->pet_id) $query->where('pet_id', $request->pet_id);
         if ($request->diet_type) $query->where('diet_type', $request->diet_type);
-        $plans = $query->latest()->get();
+        $plans = AgroVerde::paginar($query->latest());
         return view('diet-plans.index', compact('plans'));
     }
 

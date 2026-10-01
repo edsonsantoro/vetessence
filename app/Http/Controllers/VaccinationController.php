@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vaccination;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use App\Models\Role;
@@ -27,7 +28,7 @@ class VaccinationController extends Controller
             $query->where('pet_id', $request->pet_id);
         }
 
-        $vaccinations = $query->orderBy('date', 'desc')->get();
+        $vaccinations = AgroVerde::paginar($query->orderBy('date', 'desc'));
 
         $pets = Pet::where('is_active', true)->orderBy('name')->get();
 

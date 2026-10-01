@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exam;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use App\Models\Role;
@@ -27,7 +28,7 @@ class ExamController extends Controller
             $query->where('status', $request->status);
         }
 
-        $exams = $query->orderBy('requested_date', 'desc')->get();
+        $exams = AgroVerde::paginar($query->orderBy('requested_date', 'desc'));
 
         $pets = Pet::where('is_active', true)->orderBy('name')->get();
 

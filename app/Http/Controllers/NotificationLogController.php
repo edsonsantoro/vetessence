@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NotificationLog;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class NotificationLogController extends Controller
@@ -29,7 +30,7 @@ class NotificationLogController extends Controller
             $query->where('status', $request->status);
         }
 
-        $logs = $query->orderBy('sent_at', 'desc')->get();
+        $logs = AgroVerde::paginar($query->orderBy('sent_at', 'desc'));
 
         return view('notification-logs.index', compact('logs'));
     }

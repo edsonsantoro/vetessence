@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DrugInteraction;
+use App\Support\AgroVerde;
 use App\Services\DrugInteractionService;
 use Illuminate\Http\Request;
 
@@ -36,7 +37,7 @@ class DrugInteractionController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $interactions = $query->orderBy('drug_a')->orderBy('drug_b')->get();
+        $interactions = AgroVerde::paginar($query->orderBy('drug_a')->orderBy('drug_b'));
 
         return view('drug-interactions.index', compact('interactions'));
     }

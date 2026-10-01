@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\StaffNote;
+use App\Support\AgroVerde;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -36,7 +37,7 @@ class StaffNoteController extends Controller
             $query->where('category', $request->category);
         }
 
-        $notes = $query->orderBy('created_at', 'desc')->get();
+        $notes = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
         $unreadCount = StaffNote::where(function ($q) {
             $q->where('assigned_to', auth()->id())->orWhereNull('assigned_to');
         })->where('is_read', false)->where('created_by', '!=', auth()->id())->count();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Support\AgroVerde;
 use App\Models\StaffSchedule;
 use App\Models\StaffTimeOff;
 use App\Models\User;
@@ -172,7 +173,7 @@ class StaffScheduleController extends Controller
             $query->where('id', '!=', $excludeId);
         }
 
-        $daySchedules = $query->get();
+        $daySchedules = AgroVerde::paginar($query);
 
         foreach ($daySchedules as $schedule) {
             $existingStart = \Carbon\Carbon::parse($schedule->work_date->format('Y-m-d') . ' ' . $schedule->start_time);

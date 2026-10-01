@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ParasiteControl;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use App\Models\Role;
@@ -28,7 +29,7 @@ class ParasiteControlController extends Controller
             $query->whereHas('pet', fn($q) => $q->where('name', 'like', "%{$request->search}%"));
         }
 
-        $controls = $query->orderBy('application_date', 'desc')->get();
+        $controls = AgroVerde::paginar($query->orderBy('application_date', 'desc'));
         $pets = Pet::where('is_active', true)->orderBy('name')->get();
 
         return view('parasite-controls.index', compact('controls', 'pets'));

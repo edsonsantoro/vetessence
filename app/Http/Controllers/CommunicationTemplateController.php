@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CommunicationTemplate;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class CommunicationTemplateController extends Controller
@@ -32,7 +33,7 @@ class CommunicationTemplateController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $templates = $query->orderBy('name')->get();
+        $templates = AgroVerde::paginar($query->orderBy('name'));
 
         return view('communication-templates.index', compact('templates'));
     }

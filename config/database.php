@@ -56,6 +56,14 @@ return [
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
             'prefix_indexes' => true,
+            // AgroVerde: conexão em UTC, app em America/Manaus (config/app.php).
+            // Sem isto o PHP grava "20:32" numa coluna TIMESTAMP enquanto o
+            // MySQL, com sessão em UTC, entende isso como 20:32 UTC — quatro
+            // horas de desvio em todo created_at/updated_at. Colunas DATE e
+            // TIME (data de atendimento, hora da consulta) não são convertidas
+            // e ficam corretas de qualquer forma; o fuso só pesa nas colunas
+            // de auditoria.
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
             'strict' => env('DB_STRICT_MODE', true),
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([

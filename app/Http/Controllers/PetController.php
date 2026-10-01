@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pet;
 use App\Models\Tutor;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -32,13 +33,11 @@ class PetController extends Controller
         // SimplesVet são ~16 mil pets. A view continua funcionando porque
         // @foreach percorre Paginator igual percorre Collection.
         //
-        // `appends()` e não `->withQueryString()`: este último é método da
-        // Response, não da View — chamado na View ele cai no __call mágico e
-        // morre com "Undefined array key 0".
-        // Ver AGROVERDE.md §11 (camada C — edições mínimas no core).
-        $pets = $query->orderBy('name')
-            ->paginate($request->input('per_page', 50))
-            ->appends($request->query());
+        // Pelo helper, e não `->paginate($request->input('per_page', 50))`
+        // cru: sem a whitelist de tamanhos, `?per_page=99999` voltaria a
+        // carregar os 16 mil pets — o mesmo bug, por outra porta.
+        // Ver AGROVERDE.md §11.2 (camada C — edições mínimas no core).
+        $pets = AgroVerde::paginar($query->orderBy('name'));
 
         return view('pets.index', compact('pets'));
     }

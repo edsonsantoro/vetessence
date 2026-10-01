@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ControlledSubstance;
+use App\Support\AgroVerde;
 use App\Models\ControlledSubstanceLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,7 @@ class ControlledSubstanceLogController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $logs = $query->orderBy('created_at', 'desc')->get();
+        $logs = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
 
         return view('controlled-substance-logs.index', compact('logs', 'substances'));
     }

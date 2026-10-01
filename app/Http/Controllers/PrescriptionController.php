@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Prescription;
+use App\Support\AgroVerde;
 use App\Models\MedicalRecord;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ class PrescriptionController extends Controller
     {
         $query = Prescription::with('medicalRecord.pet');
 
-        $prescriptions = $query->orderBy('created_at', 'desc')->get();
+        $prescriptions = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
 
         return view('prescriptions.index', compact('prescriptions'));
     }

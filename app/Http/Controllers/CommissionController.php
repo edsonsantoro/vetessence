@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CommissionLog;
+use App\Support\AgroVerde;
 use App\Models\CommissionRate;
 use App\Models\Invoice;
 use App\Models\Service;
@@ -40,7 +41,7 @@ class CommissionController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $logs = $query->orderBy('created_at', 'desc')->get();
+        $logs = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
         $vets = User::where(fn($q) => $q->whereHas('roles', fn($q) => $q->whereIn('name', ['veterinarian', 'super-admin']))->orWhere('is_veterinarian', true))->orderBy('name')->get();
 
         $totals = (clone $query)->toBase()->reorder()->selectRaw('SUM(base_value) as total_base, SUM(commission_value) as total_commission')->first();

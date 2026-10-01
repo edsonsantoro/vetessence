@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -26,7 +27,7 @@ class CategoryController extends Controller
             $query->where('parent_id', $request->parent_id);
         }
 
-        $categories = $query->with('parent')->orderBy('type')->orderBy('name')->get();
+        $categories = AgroVerde::paginar($query->with('parent')->orderBy('type')->orderBy('name'));
 
         return view('categories.index', compact('categories'));
     }

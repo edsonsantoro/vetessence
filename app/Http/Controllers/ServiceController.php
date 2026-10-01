@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Support\AgroVerde;
 use App\Models\Category;
 use App\Models\ServicePriceTier;
 use App\Models\ServiceTypeMap;
@@ -29,7 +30,7 @@ class ServiceController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        $services = $query->orderBy('name')->get();
+        $services = AgroVerde::paginar($query->orderBy('name'));
 
         $categories = Category::where('type', 'service')->orderBy('name')->get();
 

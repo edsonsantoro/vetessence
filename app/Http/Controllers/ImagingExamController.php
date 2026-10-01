@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ImagingExam;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ class ImagingExamController extends Controller
             $query->where('exam_number', 'like', "%{$request->search}%");
         }
 
-        $exams = $query->orderBy('exam_date', 'desc')->get();
+        $exams = AgroVerde::paginar($query->orderBy('exam_date', 'desc'));
 
         return view('imaging-exams.index', compact('exams'));
     }

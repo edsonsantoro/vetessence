@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Support\AgroVerde;
 use App\Models\AppointmentService;
 use App\Models\Branch;
 use App\Models\Pet;
@@ -42,7 +43,7 @@ class AppointmentController extends Controller
             $query->withoutGlobalScope(\App\Scopes\BranchScope::class);
         }
 
-        $appointments = $query->orderBy('date')->orderBy('time')->get();
+        $appointments = AgroVerde::paginar($query->orderBy('date')->orderBy('time'));
 
         $veterinarians = $this->getVeterinarians();
         $branches = Branch::where('is_active', true)->orderBy('name')->get();

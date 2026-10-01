@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BankAccount;
+use App\Support\AgroVerde;
 use App\Models\BankTransaction;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ class BankReconciliationController extends Controller
             $query->whereDate('transaction_date', '<=', $request->date_to);
         }
 
-        $transactions = $query->orderBy('transaction_date', 'desc')->get();
+        $transactions = AgroVerde::paginar($query->orderBy('transaction_date', 'desc'));
         $accounts = BankAccount::where('is_active', true)->orderBy('bank')->get();
 
         return view('bank-reconciliation.index', compact('transactions', 'accounts'));

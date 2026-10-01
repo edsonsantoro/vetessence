@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NotificationLog;
+use App\Support\AgroVerde;
 use App\Models\VaccinationReminder;
 use App\Models\Pet;
 use App\Services\Notification\NotificationChannel;
@@ -34,7 +35,7 @@ class VaccinationReminderController extends Controller
             $query->where('pet_id', $request->pet_id);
         }
 
-        $reminders = $query->orderBy('scheduled_date', 'desc')->get();
+        $reminders = AgroVerde::paginar($query->orderBy('scheduled_date', 'desc'));
 
         $pets = Pet::where('is_active', true)->orderBy('name')->get();
 

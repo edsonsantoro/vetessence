@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HospitalizationDailyRecord;
+use App\Support\AgroVerde;
 use App\Models\Hospitalization;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,7 @@ class HospitalizationDailyRecordController extends Controller
             $query->where('hospitalization_id', $request->hospitalization_id);
         }
 
-        $records = $query->orderBy('record_date', 'desc')->get();
+        $records = AgroVerde::paginar($query->orderBy('record_date', 'desc'));
 
         return view('hospitalization-daily-records.index', compact('records'));
     }

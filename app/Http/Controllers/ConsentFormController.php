@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ConsentForm;
+use App\Support\AgroVerde;
 use App\Models\ConsentTemplate;
 use App\Models\Pet;
 use App\Models\Tutor;
@@ -36,7 +37,7 @@ class ConsentFormController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $consentForms = $query->orderBy('created_at', 'desc')->get();
+        $consentForms = AgroVerde::paginar($query->orderBy('created_at', 'desc'));
 
         return view('consent-forms.index', compact('consentForms'));
     }

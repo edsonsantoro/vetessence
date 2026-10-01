@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WeightRecord;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,7 @@ class WeightRecordController extends Controller
             $query->where('pet_id', $request->pet_id);
         }
 
-        $weightRecords = $query->orderBy('measurement_date', 'desc')->get();
+        $weightRecords = AgroVerde::paginar($query->orderBy('measurement_date', 'desc'));
 
         return view('weight-records.index', compact('weightRecords'));
     }

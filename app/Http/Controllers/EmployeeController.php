@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Support\AgroVerde;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\User;
@@ -49,7 +50,7 @@ class EmployeeController extends Controller
             $query->where('is_active', $request->is_active === '1');
         }
 
-        $employees = $query->orderBy('name')->get();
+        $employees = AgroVerde::paginar($query->orderBy('name'));
 
         $departments = Department::orderBy('name')->pluck('name', 'id');
         $positions = Position::orderBy('name')->pluck('name', 'id');

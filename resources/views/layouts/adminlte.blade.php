@@ -79,7 +79,9 @@
     </style>
     @stack('styles')
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
+{{-- AgroVerde: sinaliza que esta página tem paginação de servidor, para o
+     DataTables saber que não é dono da tabela. Ver o bloco DOMContentLoaded. --}}
+<body class="hold-transition sidebar-mini layout-fixed" data-server-paginated="{{ count((array) ($__paginas ?? [])) > 0 ? '1' : '0' }}">
     <div class="wrapper">
         <!-- Navbar -->
         <nav class="main-header navbar navbar-expand navbar-white navbar-light">
@@ -840,6 +842,39 @@
                     </div>
                     @endif
                     @yield('content')
+
+                    {{--
+                        AgroVerde: rodapé de paginação desenhado aqui, e não em
+                        cada view. São 59 listagens paginadas e nenhuma delas
+                        deve ganhar um rodapé à mão. O AgroverdeServiceProvider
+                        injeta `__paginas` com tudo que a view recebeu e que é
+                        Paginator.
+
+                        Um bloco por paginator, não por view: se um index
+                        passar a devolver duas listas paginadas, as duas
+                        aparecem sem precisar mexer em nada aqui.
+                    --}}
+                    @foreach ((array) ($__paginas ?? []) as $__pagina)
+                        @if ($__pagina->total() > 0)
+                        <div class="card mt-3">
+                            <div class="card-footer d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <small class="text-muted">
+                                    Mostrando
+                                    {{ $__pagina->firstItem() }}&ndash;{{ $__pagina->lastItem() }}
+                                    de {{ number_format($__pagina->total()) }}
+                                    {{ $__pagina->total() === 1 ? 'registro' : 'registros' }}
+                                </small>
+                                {{-- Links só quando há mais de uma página. A contagem
+                                     aparece sempre: sem ela uma lista de 17 itens
+                                     ficava sem nenhuma indicação de total, já que
+                                     o DataTables deixou de cuidar disso. --}}
+                                @if ($__pagina->hasPages())
+                                    {{ $__pagina->onEachSide(1)->links() }}
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+                    @endforeach
                 </div>
             </section>
         </div>
@@ -965,12 +1000,17 @@
             initTomSelects();
 
             if (typeof jQuery !== 'undefined' && typeof jQuery.fn.DataTable === 'function') {
+                // AgroVerde: página com paginação de servidor não entra no
+                // DataTables. As duas coisas juntas dão paginação dupla e a
+                // busca do DataTables só enxerga a página atual — pior que não
+                // ter busca nenhuma numa tabela de 16 mil linhas.
+                //
+                // O sinal é a presença de qualquer paginator na view (injetado
+                // pelo AgroverdeServiceProvider).pages tem mais de uma página,
+                // DataTables não é mais o dono da tabela.
+                if (document.body.dataset.serverPaginated === '1') return;
+
                 jQuery('table.table-bordered').each(function() {
-                    // AgroVerde: tabela dentro de [data-server-paginated] já vem
-                    // paginada pelo servidor e não entra no DataTables. Sem este
-                    // skip o usuário pagina duas vezes, e a busca do DataTables
-                    // só enxerga os registros da página atual — pior que não ter
-                    // busca nenhuma numa tabela de 16 mil linhas.
                     if (jQuery(this).closest('[data-server-paginated]').length) return;
                     if (!jQuery(this).find('thead').length) return;
                     var colCount = jQuery(this).find('thead th').length;

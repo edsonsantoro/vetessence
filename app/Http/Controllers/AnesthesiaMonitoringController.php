@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnesthesiaMonitoring;
+use App\Support\AgroVerde;
 use App\Models\AnesthesiaVitalSign;
 use App\Models\Surgery;
 use App\Models\User;
@@ -28,7 +29,7 @@ class AnesthesiaMonitoringController extends Controller
             $query->where('pet_id', $request->pet_id);
         }
 
-        $monitorings = $query->orderBy('monitoring_start', 'desc')->get();
+        $monitorings = AgroVerde::paginar($query->orderBy('monitoring_start', 'desc'));
 
         return view('anesthesia-monitorings.index', compact('monitorings'));
     }

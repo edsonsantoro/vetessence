@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DentalChart;
+use App\Support\AgroVerde;
 use App\Models\DentalCondition;
 use App\Models\Pet;
 use App\Models\Role;
@@ -31,7 +32,7 @@ class DentalChartController extends Controller
             });
         }
 
-        $charts = $query->orderBy('examination_date', 'desc')->get();
+        $charts = AgroVerde::paginar($query->orderBy('examination_date', 'desc'));
 
         return view('dental-charts.index', compact('charts'));
     }

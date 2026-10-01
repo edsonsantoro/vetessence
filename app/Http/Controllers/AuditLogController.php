@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
@@ -32,7 +33,7 @@ class AuditLogController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $logs = $query->latest()->get();
+        $logs = AgroVerde::paginar($query->latest());
 
         return view('audit-logs.index', compact('logs'));
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\NotificationLog;
 use App\Models\Pet;
 use App\Models\Tutor;
+use App\Support\AgroVerde;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -30,11 +31,9 @@ class TutorController extends Controller
 
         // AgroVerde: paginado. Sem isso a listagem carrega a tabela inteira
         // e estoura o memory_limit do PHP (erro 500). Com a base real do
-        // SimplesVet são ~10 mil tutores. `appends()` preserva a busca.
-        // Ver AGROVERDE.md §11 (camada C — edições mínimas no core).
-        $tutors = $query->orderBy('name')
-            ->paginate($request->input('per_page', 50))
-            ->appends($request->query());
+        // SimplesVet são ~10 mil tutores.
+        // Ver AGROVERDE.md §11.2 (camada C — edições mínimas no core).
+        $tutors = AgroVerde::paginar($query->orderBy('name'));
 
         return view('tutors.index', compact('tutors'));
     }

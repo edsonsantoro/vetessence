@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MedicalRecord;
+use App\Support\AgroVerde;
 use App\Models\Pet;
 use App\Models\Prescription;
 use App\Models\User;
@@ -36,7 +37,7 @@ class MedicalRecordController extends Controller
             $query->whereDate('date', '<=', $request->date_to);
         }
 
-        $records = $query->orderBy('date', 'desc')->get();
+        $records = AgroVerde::paginar($query->orderBy('date', 'desc'));
 
         $pets = Pet::where('is_active', true)->orderBy('name')->get();
 
