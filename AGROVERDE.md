@@ -442,7 +442,87 @@ avançar na migração.
 
 ---
 
-## 11. Referências
+## 11. Importação do SimplesVet e paginação
+
+### 11.1 Dados importados
+
+O ERP é o **SimplesVet** (`api.simples.vet`), não a Bradial (que é o
+atendimento por WhatsApp). A extração vive em `~/projects/agroverde/svapi/`;
+o importador lê o JSON **local** — não toca na produção.
+
+```bash
+cp ~/projects/agroverde/svapi/clientes_completos.json database/data/
+docker compose exec app php artisan agroverde:import-clientes --dry-run
+docker compose exec app php artisan agroverde:import-clientes
+```
+
+| | Origem | No banco |
+|---|---|---|
+| Tutores | 9.928 | 9.933 (5 do demo) |
+| Pets | 16.202 | 16.212 (10 do demo) |
+| Vínculos | 16.202 | 16.212 |
+
+**Idempotente**: o upsert é pela coluna `simplesvet_chave` (unique, migration
+`2026_10_01_000001`). Reexecutar atualiza, não duplica — verificado.
+
+Essa coluna não é enfeite: `/v1/calendar/appointments` devolve `customer.key`
+e `animal.key`, que são exatamente essa chave. Importar a agenda depois é só
+rodar o processo de novo, e o vínculo fecha.
+
+**Fuso**: o ERP opera em `America/Manaus` (clínica em Sinop-MT). O container
+está em `America/Sao_Paulo` — divergência pendente de decisão.
+
+### 11.2 Camada C — edições no core (conhecidas, pequenas)
+
+Estratégia de 3 camadas: A = arquivo novo, B = overlay de view, C = edição
+mínima no core. Tudo que está aqui é C, com o motivo anotado no código.
+
+| Arquivo | Mudança | Por quê |
+|---|---|---|
+| `app/Http/Controllers/PetController.php` | `get()` → `paginate(50)->appends()` | 16 mil pets estouravam o PHP |
+| `app/Http/Controllers/TutorController.php` | idem | 10 mil tutores |
+| `resources/views/pets/index.blade.php` | `data-server-paginated` + rodapé de paginação | ver §11.3 |
+| `resources/views/tutors/index.blade.php` | idem | idem |
+| `resources/views/layouts/adminlte.blade.php` | 1 linha: pula DataTables em tabela marcada | ver §11.3 |
+
+### 11.3 A briga com o DataTables
+
+O `layouts.adminlte` aplica **DataTables (jQuery) em toda `table.table-bordered`**
+— ordenação, busca e "N por página" rodam no navegador. Com paginação de
+servidor isso vira paginação dupla, e a busca do DataTables só enxerga a
+página atual: pior do que não ter busca numa tabela de 16 mil linhas.
+
+Solução: atributo `data-server-paginated` no card, e uma linha no layout que
+pula essas tabelas. Escolha por **edição mínima** em vez de copiar a view
+inteira para o overlay: uma linha de JS se resolve, 114 linhas copiadas
+divergem do upstream na primeira atualização.
+
+### 11.4 Armadilhas do Laravel 10 neste app
+
+**`->withQueryString()` na View quebra.** É método da `Response`. Chamado na
+View cai no `__call` mágico, vira `with('queryString', $parameters[0])` e morre
+com `Undefined array key 0`. Usar `->appends($request->query())` no paginator.
+
+**Paginação é Tailwind por padrão.** `Paginator::$defaultView` é
+`pagination::tailwind` nesta versão, e `defaultUseBootstrapFour()` não existe.
+Por isso: view nossa em `resources/views/vendor/pagination/bootstrap-4.blade.php`
++ `Paginator::defaultView('pagination::bootstrap-4')` no
+`AgroverdeServiceProvider`. Setar no provider (camada A) e não em
+`AppServiceProvider` (core) mantém o merge limpo.
+
+### 11.5 Pendente: 28 outras listagens
+
+**30 dos 87 controllers fazem `->get()` sem paginar.** Hoje só `pets` e
+`tutors` quebram, porque são as únicas com volume real — as outras tabelas
+têm só o demo. Conforme entrarem vendas (`/v3/comercial/vendas`) e agenda
+(`/v1/calendar/appointments`), as próximas a estourar são previsíveis:
+`invoices`, `appointments`, `medical_records`, `vaccination_reminders`.
+
+A correção é mecânica e segue o mesmo padrão de §11.2.
+
+---
+
+## 12. Referências
 
 - `PLAN.md` — Build plan do upstream (não editar)
 - `AGENTS.md` — Convenções do upstream (não editar)

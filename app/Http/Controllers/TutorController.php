@@ -28,8 +28,13 @@ class TutorController extends Controller
             });
         }
 
+        // AgroVerde: paginado. Sem isso a listagem carrega a tabela inteira
+        // e estoura o memory_limit do PHP (erro 500). Com a base real do
+        // SimplesVet são ~10 mil tutores. `appends()` preserva a busca.
+        // Ver AGROVERDE.md §11 (camada C — edições mínimas no core).
         $tutors = $query->orderBy('name')
-            ->get();
+            ->paginate($request->input('per_page', 50))
+            ->appends($request->query());
 
         return view('tutors.index', compact('tutors'));
     }

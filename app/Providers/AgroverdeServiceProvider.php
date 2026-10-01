@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Middleware\AgroVerdeTrustProxies;
 use App\Http\Middleware\TrustProxies;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -59,6 +60,27 @@ class AgroverdeServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->registerMigrations();
         $this->registerObservers();
+        $this->registerPaginationView();
+    }
+
+    /**
+     * Usa a paginação em Bootstrap 4.
+     *
+     * O Laravel 10 passou a renderizar paginação em Tailwind por padrão. Este
+     * app é AdminLTE 3 (Bootstrap 4): a view Tailwind entra sem estilo
+     * (setas gigantes, mobile e desktop sobrepostos).
+     *
+     * A view Bootstrap vive em resources/views/vendor/pagination/ — pasta do
+     * vendor, território do fork. Publicar a view do framework faria o
+     * upstream ver um arquivo nosso como se fosse dele e brigar no merge.
+     *
+     * Note que não existe `defaultUseBootstrapFour()` nesta versão: o Laravel
+     * removeu os atalhos e passou a usar `pagination::tailwind` direto.
+     */
+    protected function registerPaginationView(): void
+    {
+        Paginator::defaultView('pagination::bootstrap-4');
+        Paginator::defaultSimpleView('pagination::bootstrap-4');
     }
 
     /**

@@ -966,6 +966,12 @@
 
             if (typeof jQuery !== 'undefined' && typeof jQuery.fn.DataTable === 'function') {
                 jQuery('table.table-bordered').each(function() {
+                    // AgroVerde: tabela dentro de [data-server-paginated] já vem
+                    // paginada pelo servidor e não entra no DataTables. Sem este
+                    // skip o usuário pagina duas vezes, e a busca do DataTables
+                    // só enxerga os registros da página atual — pior que não ter
+                    // busca nenhuma numa tabela de 16 mil linhas.
+                    if (jQuery(this).closest('[data-server-paginated]').length) return;
                     if (!jQuery(this).find('thead').length) return;
                     var colCount = jQuery(this).find('thead th').length;
                     // Remove empty-state rows with colspan to avoid "Incorrect column count" error

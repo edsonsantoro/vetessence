@@ -27,7 +27,18 @@ class PetController extends Controller
             $query->where('species', $request->species);
         }
 
-        $pets = $query->orderBy('name')->get();
+        // AgroVerde: paginado. Sem isso a listagem carrega a tabela inteira
+        // e estoura o memory_limit do PHP (erro 500). Com a base real do
+        // SimplesVet são ~16 mil pets. A view continua funcionando porque
+        // @foreach percorre Paginator igual percorre Collection.
+        //
+        // `appends()` e não `->withQueryString()`: este último é método da
+        // Response, não da View — chamado na View ele cai no __call mágico e
+        // morre com "Undefined array key 0".
+        // Ver AGROVERDE.md §11 (camada C — edições mínimas no core).
+        $pets = $query->orderBy('name')
+            ->paginate($request->input('per_page', 50))
+            ->appends($request->query());
 
         return view('pets.index', compact('pets'));
     }
