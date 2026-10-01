@@ -522,7 +522,88 @@ A correção é mecânica e segue o mesmo padrão de §11.2.
 
 ---
 
-## 12. Referências
+## 12. Prontuário do animal (timeline)
+
+**É bloqueador de migração, não melhoria.** Sem histórico do animal, a
+recepção não consegue explicar uma consulta antiga e a clínica não migra.
+
+### 12.1 O que existia
+
+`PatientTimelineController` do upstream montava a linha do tempo com sete
+blocos `foreach` inline, cada um repetindo rótulo, ícone, cor e rota. A view
+(52 linhas) desenhava o resultado. Não havia filtro nenhum.
+
+### 12.2 O que o SimplesVet guarda por animal
+
+O ERP consolida **11 tipos de registro** no animal — é o "coração do modelo",
+como diz a análise. Oito deles já tinham tabela no VetEssence e simplesmente
+não apareciam na timeline:
+
+| # | Registro | Tabela | Antes |
+|---|----------|--------|-------|
+| 1 | Atendimento | `medical_records` | ✅ na timeline |
+| 2 | Vacina | `vaccinations` | ✅ |
+| 3 | Consulta | `appointments` | ✅ |
+| 4 | Exame | `exams` | ✅ |
+| 5 | Internação | `hospitalizations` | ✅ |
+| 6 | Fatura | `invoices` | ✅ |
+| 7 | **Receita** | `prescriptions` | ❌ não aparecia |
+| 8 | **Peso** | `weight_records` | ❌ |
+| 9 | **Parasitário** | `parasite_controls` | ❌ |
+| 10 | **Tratamento** | `treatment_plans` | ❌ |
+| 11 | **Odontograma** | `dental_charts` | ❌ |
+
+Prescrição não tem `pet_id`: liga pelo `medical_record_id`. Foi a única
+ligação indireta, e há teste garantindo que a prescrição de um pet não vaza
+para a timeline de outro.
+
+### 12.3 Filtros
+
+`?tipos=consulta,exame` (vazio = todos), `?de=YYYY-MM-DD`, `?ate=YYYY-MM-DD`.
+
+Dois detalhes que só aparecem testando:
+
+- **Slug inválido não vira "mostrar tudo".** `?tipos=xyz` devolve lista vazia
+  e a tela mostra "Nenhum evento" — o oposto do pedido. A primeira versão
+  devolvia `null`, que significa "todos".
+- **Datas exigem `YYYY-MM-DD`.** `strtotime('amanhã')` funciona e
+  `strtotime('foo')` devolve epoch; sem o formato, a URL finjaria um filtro que
+  não existe.
+
+### 12.4 Estrutura (camada A + B + C)
+
+| Arquivo | Camada | Papel |
+|---|---|---|
+| `app/Support/Timeline/TimelineType.php` | A | Definição de um tipo (slug, rótulo, ícone, cor) |
+| `app/Support/Timeline/Timeline.php` | A | Registro dos 12 tipos + montagem dos eventos |
+| `resources/views/agroverde/pets/timeline.blade.php` | B | View com filtros |
+| `app/Http/Controllers/PatientTimelineController.php` | C | Delega para o Timeline; valida os filtros |
+
+Um tipo novo passa a ser **um arquivo só**, não uma edição em controller e
+view em lockstep — que era como o upstream fazia.
+
+A view é overlay (B) e o controller é edição mínima (C) porque a montagem
+acontece em PHP: o overlay de view não alcança o controller. A alternativa
+seria duplicar os sete blocos num controller nosso e trocar a rota, o que é
+mais código e mais atrito de merge.
+
+### 12.5 Fora do alcance
+
+Faltam tabelas para os outros 4 registros do ERP: **Patologia, Observação,
+Documento, Foto e Vídeo**. Não é adaptação — são migrations novas com model,
+controller, tela e formulário de upload. Registrado aqui para não ser
+confundido com "já pronto".
+
+### 12.6 Testes
+
+`tests/Feature/PatientTimelineAgroVerdeTest.php` — 14 casos cobrindo os 5
+tipos novos, isolamento entre pets, os dois filtros, slug inválido, data
+inválida e ordenação cronológica. Os 4 testes do upstream continuam intactos
+e passando.
+
+---
+
+## 13. Referências
 
 - `PLAN.md` — Build plan do upstream (não editar)
 - `AGENTS.md` — Convenções do upstream (não editar)

@@ -3,12 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pet;
-use App\Models\MedicalRecord;
-use App\Models\Vaccination;
-use App\Models\Exam;
-use App\Models\Surgery;
-use App\Models\Hospitalization;
-use App\Models\Invoice;
+use App\Support\Timeline\Timeline;
+use Illuminate\Http\Request;
 
 class PatientTimelineController extends Controller
 {
@@ -17,92 +13,87 @@ class PatientTimelineController extends Controller
         $this->middleware('can:pets.view');
     }
 
-    public function index(Pet $pet)
+    /**
+     * Prontuário do animal: tudo o que aconteceu com o pet, em uma linha do
+     * tempo.
+     *
+     * ── AgroVerde (camada C — edição mínima no core) ────────────────────────
+     * O upstream montava a timeline com sete blocos `foreach` inline, cada um
+     * repetindo rótulo, ícone, cor e rota. Este método só delega para
+     * App\Support\Timeline\Timeline (camada A), que é quem sabe os tipos.
+     *
+     * Por que não overlay: a montagem acontece no controller, e o overlay de
+     * view (camada B) não alcança código PHP. A única alternativa seria
+     * duplicar os sete blocos num controller nosso e trocar a rota — mais
+     * código e mais atrito de merge do que uma delegação.
+     *
+     * Filtros: `?tipos=consulta,exame` (vazio = todos), `?de=2026-01-01`,
+     * `?ate=2026-12-31`. Slug ou data inválidos são ignorados, não viram erro.
+     */
+    public function index(Request $request, Pet $pet)
     {
         $pet->load('tutors');
 
-        $events = collect();
+        $tipos = $this->tiposPedidos($request);
+        $de = $this->dataValida($request->query('de'));
+        $ate = $this->dataValida($request->query('ate'));
 
-        foreach ($pet->medicalRecords as $r) {
-            $events->push([
-                'date' => $r->created_at,
-                'type' => 'Prontuário',
-                'icon' => 'fa-notes-medical',
-                'color' => 'success',
-                'summary' => $r->diagnosis ?? $r->chief_complaint ?? 'Atendimento',
-                'url' => route('medical-records.show', $r),
-            ]);
+        $eventos = Timeline::paraPet($pet, $tipos, $de, $ate);
+
+        return view('pets.timeline', [
+            'pet' => $pet,
+            'events' => $eventos,
+            'tiposDisponiveis' => Timeline::tipos(),
+            'tiposAtivos' => $tipos,
+            'totalPorTipo' => Timeline::totalPorTipo($pet),
+            'de' => $de,
+            'ate' => $ate,
+        ]);
+    }
+
+    /**
+     * Slugs válidos pedidos na URL.
+     *
+     * null = nenhum filtro (todos). [] = pediu, mas nada era válido.
+     *
+     * A distinção importa: `?tipos=xyz` com "nada válido" devolvendo null
+     * faria a tela mostrar TUDO, que é o oposto do que a pessoa pediu. O
+     * comentário anterior neste método dizia uma coisa e o código fazia
+     * outra — agora a semântica bate.
+     *
+     * @return array<int,string>|null
+     */
+    private function tiposPedidos(Request $request): ?array
+    {
+        $bruto = $request->query('tipos');
+
+        if ($bruto === null || $bruto === '') {
+            return null;
         }
 
-        foreach ($pet->vaccinations as $v) {
-            $events->push([
-                'date' => $v->date,
-                'type' => 'Vacina',
-                'icon' => 'fa-syringe',
-                'color' => 'info',
-                'summary' => $v->vaccine . ($v->batch ? " (lote {$v->batch})" : ''),
-                'url' => route('vaccinations.show', $v),
-            ]);
+        $pedidos = array_filter(
+            array_map('trim', explode(',', is_array($bruto) ? implode(',', $bruto) : (string) $bruto)),
+            fn ($slug) => $slug !== ''
+        );
+
+        return array_values(array_filter(
+            $pedidos,
+            fn ($slug) => Timeline::tipoPorSlug($slug) !== null
+        ));
+    }
+
+    private function dataValida($valor): ?string
+    {
+        if (! is_string($valor) || $valor === '') {
+            return null;
         }
 
-        foreach ($pet->appointments as $a) {
-            $events->push([
-                'date' => $a->start_time,
-                'type' => 'Consulta',
-                'icon' => 'fa-calendar-check',
-                'color' => 'primary',
-                'summary' => 'Status: ' . ($a->status ?? 'agendado'),
-                'url' => route('appointments.show', $a),
-            ]);
-        }
+        $ts = strtotime($valor);
 
-        foreach ($pet->exams as $e) {
-            $events->push([
-                'date' => $e->date ?? $e->created_at,
-                'type' => 'Exame',
-                'icon' => 'fa-flask',
-                'color' => 'warning',
-                'summary' => $e->type ?? 'Exame',
-                'url' => route('exams.show', $e),
-            ]);
-        }
-
-        foreach ($pet->surgeries as $s) {
-            $events->push([
-                'date' => $s->date ?? $s->created_at,
-                'type' => 'Cirurgia',
-                'icon' => 'fa-user-md',
-                'color' => 'danger',
-                'summary' => $s->surgery_type ?? 'Procedimento cirúrgico',
-                'url' => route('surgeries.show', $s),
-            ]);
-        }
-
-        $hospitalizations = Hospitalization::where('pet_id', $pet->id)->get();
-        foreach ($hospitalizations as $h) {
-            $events->push([
-                'date' => $h->admission_date,
-                'type' => 'Internação',
-                'icon' => 'fa-procedures',
-                'color' => 'secondary',
-                'summary' => 'Admitido: ' . ($h->admission_reason ?? '') . ($h->discharged_at ? ' | Alta: ' . $h->discharged_at->format('d/m/Y') : ''),
-                'url' => route('hospitalizations.show', $h),
-            ]);
-        }
-
-        foreach ($pet->invoices as $i) {
-            $events->push([
-                'date' => $i->created_at,
-                'type' => 'Fatura',
-                'icon' => 'fa-file-invoice-dollar',
-                'color' => 'dark',
-                'summary' => 'R$ ' . number_format($i->total, 2, ',', '.') . ' — ' . ($i->status ?? ''),
-                'url' => route('invoices.show', $i),
-            ]);
-        }
-
-        $events = $events->sortByDesc('date')->values();
-
-        return view('pets.timeline', compact('pet', 'events'));
+        // strtotime aceita "amanhã" e devolve epoch para data inválida, o que
+        // finjaria um filtro que não existe. Exigir YYYY-MM-DD resolve.
+        return $ts !== false && preg_match('/^\d{4}-\d{2}-\d{2}/', $valor)
+            ? date('Y-m-d', $ts)
+            : null;
     }
 }
